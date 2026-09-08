@@ -1,0 +1,396 @@
+/* =========================================================
+   AcreditaQR — estilos propios
+   Paleta, tipografía y motivo visual de "ticket perforado"
+   inspirado en las entradas físicas de un evento.
+   ========================================================= */
+
+:root {
+  --color-bg: #F5F6F8;
+  --color-surface: #FFFFFF;
+  --color-primary: #1B2A4A;
+  --color-primary-light: #2E4370;
+  --color-accent: #E8A33D;
+  --color-accent-dark: #C9861F;
+  --color-success: #2F9E6F;
+  --color-danger: #D64550;
+  --color-text: #1A1D29;
+  --color-text-muted: #5B6472;
+  --color-border: #E1E4EA;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Public Sans', sans-serif;
+
+  --radius-card: 14px;
+  --radius-pill: 999px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+h1, h2, h3, .navbar-brand {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+}
+
+/* ---------------- Header / navegación ---------------- */
+
+.site-header {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.navbar-brand i {
+  color: var(--color-accent);
+}
+
+.btn-vista, .btn-subvista {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border: none;
+  background: transparent;
+}
+
+.btn-vista.active, .btn-subvista.active,
+.btn-vista:hover, .btn-subvista:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ---------------- Hero / filtros ---------------- */
+
+.hero-eventos h1 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.filtros-form {
+  margin-top: 1.25rem;
+}
+
+/* ---------------- Botones de marca ---------------- */
+
+.btn-primary-brand {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn-primary-brand:hover {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  color: #fff;
+}
+
+/* ---------------- Tarjeta de evento (motivo ticket) ---------------- */
+
+.card-evento {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.card-evento:hover {
+  box-shadow: 0 8px 24px rgba(27, 42, 74, 0.10);
+  transform: translateY(-2px);
+}
+
+.card-evento-info {
+  padding: 1.1rem 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-evento-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-evento-meta li {
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+}
+
+.badge-categoria {
+  background-color: rgba(232, 163, 61, 0.16);
+  color: var(--color-accent-dark);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 0.35em 0.65em;
+  width: fit-content;
+}
+
+/* "stub" perforado, como el talón de una entrada */
+.card-evento-stub {
+  width: 108px;
+  flex-shrink: 0;
+  border-left: 2px dashed var(--color-border);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.5rem;
+  background-color: #FAFAFB;
+  text-align: center;
+}
+
+.card-evento-stub::before,
+.card-evento-stub::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--color-bg);
+}
+
+.card-evento-stub::before { top: -9px; }
+.card-evento-stub::after { bottom: -9px; }
+
+.stub-aforo-numero {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--color-primary);
+}
+
+.stub-aforo-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.card-evento.agotado .stub-aforo-numero {
+  color: var(--color-danger);
+}
+
+.btn-inscribirse {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-inscribirse:hover {
+  background-color: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+  color: #fff;
+}
+
+.btn-inscribirse:disabled {
+  background-color: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ---------------- Ticket / Mi entrada ---------------- */
+
+.ticket {
+  display: flex;
+  max-width: 560px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(27, 42, 74, 0.08);
+}
+
+.ticket-info {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.ticket-eyebrow {
+  color: var(--color-accent-dark);
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.15rem;
+}
+
+.ticket-participante {
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.ticket-meta li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.ticket-estado {
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.ticket-stub {
+  width: 190px;
+  flex-shrink: 0;
+  border-left: 2px dashed var(--color-border);
+  position: relative;
+  background-color: #FAFAFB;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+}
+
+.ticket-stub::before,
+.ticket-stub::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--color-bg);
+}
+
+.ticket-stub::before { top: -9px; }
+.ticket-stub::after { bottom: -9px; }
+
+.ticket-qr {
+  background-color: #fff;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.ticket-codigo {
+  font-family: 'Courier New', monospace;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.btn-certificado {
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+}
+
+.btn-certificado:disabled {
+  background-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ---------------- Panel organizador ---------------- */
+
+.card-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.progress {
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+}
+
+.dash-barra {
+  background-color: var(--color-success);
+}
+
+.dash-barra.aforo-alto {
+  background-color: var(--color-accent);
+}
+
+.dash-barra.aforo-lleno {
+  background-color: var(--color-danger);
+}
+
+/* ---------------- Estado vacío ---------------- */
+
+.empty-state i {
+  color: var(--color-border);
+}
+
+/* ---------------- Footer ---------------- */
+
+.site-footer {
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 576px) {
+  .card-evento {
+    flex-direction: column;
+  }
+  .card-evento-stub {
+    width: 100%;
+    flex-direction: row;
+    border-left: none;
+    border-top: 2px dashed var(--color-border);
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+  }
+  .card-evento-stub::before,
+  .card-evento-stub::after {
+    left: auto;
+    top: -9px;
+  }
+  .card-evento-stub::before { left: -9px; }
+  .card-evento-stub::after { right: -9px; }
+
+  .ticket {
+    flex-direction: column;
+  }
+  .ticket-stub {
+    width: 100%;
+    border-left: none;
+    border-top: 2px dashed var(--color-border);
+  }
+  .ticket-stub::before,
+  .ticket-stub::after {
+    left: auto;
+    top: -9px;
+  }
+  .ticket-stub::before { left: -9px; }
+  .ticket-stub::after { right: -9px; }
+}
+
+/* Foco visible para accesibilidad de teclado */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
