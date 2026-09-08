@@ -5,10 +5,11 @@ Proyecto para la **Actividad Evaluada 1 — Desarrollo de Interfaz Frontend**
 
 ## Integrantes
 
-- Nombre Apellido — rol
-- Nombre Apellido — rol
+- Benjamin Michea
+- Cristian Perez
+- Ignacio Cornejo
 
-*(completar con los integrantes reales del equipo)*
+
 
 ## Problemática
 
