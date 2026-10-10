@@ -1,111 +1,466 @@
+/* =========================================================
+   AcreditaQR — estilos propios
+   Paleta, tipografía y motivo visual de "ticket perforado"
+   inspirado en las entradas físicas de un evento.
+   Portado desde la Actividad Evaluada 1.
+   ========================================================= */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --color-bg: #F5F6F8;
+  --color-surface: #FFFFFF;
+  --color-primary: #1B2A4A;
+  --color-primary-light: #2E4370;
+  --color-accent: #E8A33D;
+  --color-accent-dark: #C9861F;
+  --color-success: #2F9E6F;
+  --color-danger: #D64550;
+  --color-text: #1A1D29;
+  --color-text-muted: #5B6472;
+  --color-border: #E1E4EA;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Public Sans', sans-serif;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --radius-card: 14px;
+  --radius-pill: 999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  min-height: 100vh;
   margin: 0;
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
+main {
+  flex: 1;
+}
+
+h1, h2, h3, .navbar-brand {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+}
+
+/* ---------------- Header / navegación ---------------- */
+
+.site-header {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.btn-vista, .btn-subvista {
+  font-family: var(--font-body);
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--color-text-muted);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-pill);
+  padding: 0.4rem 1rem;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+.btn-vista.active, .btn-subvista.active,
+.btn-vista:hover, .btn-subvista:hover {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+/* ---------------- Hero / filtros ---------------- */
+
+.hero-eventos h1 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.filtros-form {
+  margin-top: 1.25rem;
+}
+
+/* ---------------- Botones de marca ---------------- */
+
+.btn-primary-brand {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn-primary-brand:hover {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  color: #fff;
+}
+
+/* ---------------- Tarjeta de evento (motivo ticket) ---------------- */
+
+.card-evento {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  height: 100%;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.card-evento:hover {
+  box-shadow: 0 8px 24px rgba(27, 42, 74, 0.10);
+  transform: translateY(-2px);
+}
+
+.card-evento-info {
+  padding: 1.1rem 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-evento-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-evento-meta {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.card-evento-meta li {
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+}
+
+.badge-categoria {
+  background-color: rgba(232, 163, 61, 0.16);
+  color: var(--color-accent-dark);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 0.35em 0.65em;
+  border-radius: var(--radius-pill);
+  width: fit-content;
+}
+
+/* "stub" perforado, como el talón de una entrada */
+.card-evento-stub {
+  width: 108px;
+  flex-shrink: 0;
+  border-left: 2px dashed var(--color-border);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.5rem;
+  background-color: #FAFAFB;
+  text-align: center;
+}
+
+.card-evento-stub::before,
+.card-evento-stub::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--color-bg);
+}
+
+.card-evento-stub::before { top: -9px; }
+.card-evento-stub::after { bottom: -9px; }
+
+.stub-aforo-numero {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--color-primary);
+}
+
+.stub-aforo-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.card-evento.agotado .stub-aforo-numero {
+  color: var(--color-danger);
+}
+
+.btn-inscribirse {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-inscribirse:hover {
+  background-color: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+  color: #fff;
+}
+
+.btn-inscribirse:disabled {
+  background-color: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ---------------- Ticket / Mi entrada ---------------- */
+
+.ticket {
+  display: flex;
+  max-width: 560px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(27, 42, 74, 0.08);
+}
+
+.ticket-info {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.ticket-eyebrow {
+  color: var(--color-accent-dark);
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.15rem;
+}
+
+.ticket-participante {
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.ticket-meta {
+  list-style: none;
+  padding-left: 0;
+  font-size: 0.875rem;
+}
+
+.ticket-meta li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.ticket-estado {
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.ticket-stub {
+  width: 190px;
+  flex-shrink: 0;
+  border-left: 2px dashed var(--color-border);
+  position: relative;
+  background-color: #FAFAFB;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+}
+
+.ticket-stub::before,
+.ticket-stub::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--color-bg);
+}
+
+.ticket-stub::before { top: -9px; }
+.ticket-stub::after { bottom: -9px; }
+
+.ticket-qr {
+  background-color: #fff;
+  padding: 6px;
+  border-radius: 6px;
+  line-height: 0;
+}
+
+.ticket-codigo {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+/* ---------------- Panel organizador ---------------- */
+
+.card-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+}
+
+.progress {
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+}
+
+.dash-barra {
+  background-color: var(--color-success);
+}
+
+.dash-barra.aforo-alto {
+  background-color: var(--color-accent);
+}
+
+.dash-barra.aforo-lleno {
+  background-color: var(--color-danger);
+}
+
+.input-codigo {
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+}
+
+/* ---------------- Clima (API pública) ---------------- */
+
+.clima-caja {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: #FAFAFB;
+  padding: 0.75rem 1rem;
+}
+
+.clima-temp {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--color-primary);
+}
+
+/* ---------------- Modal propio (renderizado condicional) ---------------- */
+
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(26, 29, 41, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1050;
+  overflow-y: auto;
+}
+
+.modal-caja {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-card);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(27, 42, 74, 0.25);
+}
+
+.modal-cabecera {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.modal-cuerpo {
+  padding: 1.25rem;
+}
+
+/* ---------------- Estado vacío ---------------- */
+
+.empty-state i {
+  color: var(--color-border);
+}
+
+/* ---------------- Footer ---------------- */
+
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 576px) {
+  .card-evento {
+    flex-direction: column;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+  .card-evento-stub {
+    width: 100%;
+    flex-direction: row;
+    border-left: none;
+    border-top: 2px dashed var(--color-border);
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
   }
-}
-p {
-  margin: 0;
+  .card-evento-stub::before,
+  .card-evento-stub::after {
+    left: auto;
+    top: -9px;
+  }
+  .card-evento-stub::before { left: -9px; }
+  .card-evento-stub::after { right: -9px; }
+
+  .ticket {
+    flex-direction: column;
+  }
+  .ticket-stub {
+    width: 100%;
+    border-left: none;
+    border-top: 2px dashed var(--color-border);
+  }
+  .ticket-stub::before,
+  .ticket-stub::after {
+    left: auto;
+    top: -9px;
+  }
+  .ticket-stub::before { left: -9px; }
+  .ticket-stub::after { right: -9px; }
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* Foco visible para accesibilidad de teclado */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
 }
