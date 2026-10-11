@@ -3,9 +3,9 @@
 Aplicación frontend construida con **React + Vite** para la gestión de eventos
 universitarios y la acreditación de asistentes mediante código QR.
 
-Continúa la problemática trabajada en la Actividad Evaluada 1 (HTML5 + CSS3 +
-Bootstrap + JavaScript), cuya implementación se conserva en la raíz de este
-repositorio. Esta carpeta contiene la reimplementación con React.
+Continúa la problemática trabajada en la Actividad Evaluada 1. La entrega actual
+está implementada en esta carpeta y se organiza mediante componentes, props,
+estado React, datos locales y una API pública.
 
 ## Integrantes
 
@@ -15,10 +15,9 @@ repositorio. Esta carpeta contiene la reimplementación con React.
 
 ## Problemática
 
-Los seminarios, capacitaciones y ferias universitarias gestionan sus
-inscripciones y el control de asistencia de forma manual, con planillas o listas
-en papel. Eso hace difícil controlar el aforo, saber cuántos cupos quedan y
-verificar quién asistió realmente.
+Los seminarios, capacitaciones, ferias y actividades universitarias suelen
+gestionar inscripciones y control de asistencia con planillas o listas manuales.
+Eso dificulta controlar aforo, cupos disponibles y asistencia real.
 
 **AcreditaQR** centraliza ese proceso en una interfaz única.
 
@@ -26,31 +25,35 @@ verificar quién asistió realmente.
 
 | Usuario | Qué necesita |
 |---|---|
-| Asistente | Encontrar eventos con cupo, inscribirse y tener su entrada a mano |
-| Organizador | Acreditar asistentes en la puerta y ver el aforo en tiempo real |
+| Asistente | Encontrar eventos con cupo, inscribirse y disponer de una entrada digital |
+| Organizador | Acreditar asistentes y consultar el aforo actualizado |
 
 ## Funcionalidades principales
 
-1. Listado de eventos con buscador y filtros por categoría y disponibilidad.
-2. Inscripción mediante formulario con validación propia.
-3. Generación de una entrada digital con código único y su QR.
-4. Acreditación (check-in) por código desde el panel del organizador.
-5. Dashboard de aforo con inscritos, asistentes y cupos restantes.
-6. Pronóstico del tiempo para la fecha y lugar del evento (API pública).
+1. Listado de eventos con buscador y filtros por categoría/disponibilidad.
+2. Inscripción mediante formulario controlado y validación propia.
+3. Generación de entrada digital con código único y QR.
+4. Persistencia de inscripciones en `localStorage`.
+5. Acreditación por código desde el panel del organizador.
+6. Prevención de doble acreditación.
+7. Dashboard de aforo, inscritos, asistentes y cupos restantes.
+8. Pronóstico del tiempo para eventos al aire libre mediante API pública.
+9. Estados de carga, error y ausencia de datos en la integración de la API.
+10. Diseño responsive con Bootstrap y CSS propio.
 
 ## Tecnologías utilizadas
 
 - **React 19** — componentes, props, estado y renderizado declarativo
-- **Vite** — herramienta de desarrollo y build
+- **Vite** — entorno de desarrollo y build
 - **Bootstrap 5** — grilla, utilidades y componentes visuales
 - **Bootstrap Icons** — iconografía
 - **CSS3 propio** — variables, Flexbox, media queries e identidad visual
 - **qrcode.react** — generación del QR en el navegador
 - **Fetch API** — consumo de la API pública
-- **JSON local** — datos iniciales, sin backend
-- **localStorage** — persistencia de inscripciones entre recargas
+- **JSON local** — fuente de datos inicial
+- **localStorage** — persistencia local sin backend
 
-## Cómo ejecutar el proyecto
+## Cómo ejecutar
 
 ```bash
 cd taller2-react
@@ -58,30 +61,36 @@ npm install
 npm run dev
 ```
 
-La aplicación queda disponible en `http://localhost:5173/`.
+La aplicación queda disponible normalmente en `http://localhost:5173/`.
 
-Para generar la versión de producción:
+Verificaciones recomendadas antes de entregar:
 
 ```bash
+npm run lint
 npm run build
 npm run preview
 ```
 
-## Estructura de la aplicación
+## Estructura
 
-```
+```text
 taller2-react/
 ├── index.html
+├── docs/
+│   ├── diseno-interfaz.md
+│   ├── evidencias-pendientes.md
+│   ├── guia-presentacion-defensa.md
+│   └── uso-ia.md
 ├── src/
-│   ├── main.jsx                  # punto de entrada, importa estilos
-│   ├── App.jsx                   # estado global y navegación entre vistas
-│   ├── index.css                 # estilos propios
+│   ├── main.jsx
+│   ├── App.jsx
+│   ├── index.css
 │   ├── data/
-│   │   └── eventos.json          # datos iniciales (sin backend)
+│   │   └── eventos.json
 │   ├── services/
-│   │   └── climaApi.js           # integración con Open-Meteo
+│   │   └── climaApi.js
 │   ├── utils/
-│   │   └── formato.js            # formato de fecha y generación de códigos
+│   │   └── formato.js
 │   ├── components/
 │   │   ├── Navbar.jsx
 │   │   ├── FiltrosEventos.jsx
@@ -96,23 +105,33 @@ taller2-react/
 │       ├── Eventos.jsx
 │       ├── MiEntrada.jsx
 │       └── Organizador.jsx
+└── vite.config.js
 ```
 
-### Decisiones de arquitectura
+## Decisiones de arquitectura
 
-- **El estado compartido vive en `App.jsx`.** Participantes, inscripciones y la
-  vista activa se necesitan en más de una pantalla, así que se declaran en el
-  componente raíz y bajan por props.
-- **El estado local se queda donde se usa.** Los filtros viven en `Eventos.jsx`
-  y el código escrito en el check-in vive en `CheckIn.jsx`, porque ningún otro
-  componente los necesita.
-- **No se guardan datos derivados.** El número de inscritos no es un contador
-  aparte: se calcula sumando `aforoBase` (inscripciones previas simuladas) más
-  las inscripciones registradas. Así el listado y el dashboard no pueden
-  mostrar números contradictorios.
-- **El modal no usa el JavaScript de Bootstrap.** Aparece y desaparece por
-  renderizado condicional desde `App.jsx`; de Bootstrap sólo se usan las clases
-  visuales.
+- **Estado compartido en `App.jsx`:** participantes, inscripciones, vista activa
+  y entrada actual se necesitan en más de una pantalla.
+- **Estado local donde corresponde:** filtros, formulario, check-in y consulta
+  meteorológica se mantienen en los componentes que realmente los usan.
+- **Datos derivados no se duplican:** el total de inscritos se calcula a partir
+  de `aforoBase` más las inscripciones nuevas.
+- **Renderizado condicional:** vistas, modal, mensajes, estados vacíos y
+  resultados se muestran según el estado React.
+- **Sin backend:** los datos iniciales están en JSON y la persistencia se simula
+  con `localStorage`, de acuerdo con el alcance del taller.
+
+## Diseño previo y flujos
+
+La navegación, wireframes de referencia, jerarquía visual, componentes
+repetibles, responsive y decisiones de diseño están documentados en:
+
+[docs/diseno-interfaz.md](docs/diseno-interfaz.md)
+
+El equipo debe complementar ese documento con evidencia real y fechada de diseño
+previo si dispone de ella. Las instrucciones están en:
+
+[docs/evidencias-pendientes.md](docs/evidencias-pendientes.md)
 
 ## API pública utilizada
 
@@ -122,44 +141,44 @@ taller2-react/
 | Documentación oficial | https://open-meteo.com/en/docs |
 | Endpoint | `GET https://api.open-meteo.com/v1/forecast` |
 | Método HTTP | GET |
-| Parámetros enviados | `latitude`, `longitude`, `daily`, `timezone`, `start_date`, `end_date` |
-| Datos utilizados | `daily.temperature_2m_max`, `daily.temperature_2m_min`, `daily.weather_code` |
-| Dónde se muestra | En el modal de inscripción, sobre el formulario |
+| Parámetros | `latitude`, `longitude`, `daily`, `timezone`, `start_date`, `end_date` |
+| Datos usados | temperaturas máxima/mínima y `weather_code` |
+| Dónde se muestra | Modal de inscripción de eventos al aire libre |
 | Autenticación | No requiere clave de API |
-| Implementación | `src/services/climaApi.js` y `src/components/ClimaEvento.jsx` |
+| Implementación | `src/services/climaApi.js` + `src/components/ClimaEvento.jsx` |
 
 ### Justificación funcional
 
-Varios de los eventos del catálogo son al aire libre (ferias, jornadas
-deportivas). Antes de confirmar una inscripción, la persona ve qué temperatura y
-qué condición se esperan ese día en ese lugar, lo que le permite decidir si
-asiste y cómo prepararse. La API no es decorativa: responde a una pregunta real
-que el usuario se hace antes de inscribirse.
+En actividades exteriores, el clima puede cambiar la decisión de asistir o la
+preparación necesaria. Mostrar el pronóstico antes de confirmar la inscripción
+aporta información directamente relacionada con ese flujo.
 
-### Manejo de errores
+### Manejo de estados
 
-`ClimaEvento` contempla cuatro situaciones distintas:
+`ClimaEvento` contempla:
 
-- **Cargando** — indicador mientras la petición está en curso.
-- **Error** — si la petición falla o la API responde con un estado distinto de
-  200, se muestra un aviso y el formulario sigue siendo utilizable.
-- **Sin datos** — el pronóstico de Open-Meteo cubre aproximadamente 16 días; si
-  el evento está fuera de ese rango, se informa que aún no hay pronóstico.
-- **Datos disponibles** — se muestran las temperaturas y la descripción.
+- **Cargando:** indicador durante la petición.
+- **Error:** muestra aviso sin impedir la inscripción.
+- **Sin datos:** informa que todavía no existe pronóstico utilizable.
+- **Datos disponibles:** muestra temperaturas y descripción meteorológica.
 
 ## Uso de Inteligencia Artificial
 
-Ver el detalle completo en [`docs/uso-ia.md`](docs/uso-ia.md).
+El reporte se encuentra en [docs/uso-ia.md](docs/uso-ia.md). Debe reflejar
+únicamente usos reales y ser revisado por el equipo antes de entregar.
 
 ## Limitaciones conocidas
 
-- No hay backend ni base de datos: los datos viven en memoria y en
-  `localStorage` del navegador. Son locales a ese equipo y ese navegador.
-- No existe autenticación real. La vista "Mi entrada" muestra la última
-  inscripción realizada en esa sesión, simulando un usuario único.
-- El pronóstico sólo está disponible para fechas dentro del rango que entrega
-  Open-Meteo.
-- La acreditación se realiza escribiendo el código. El escaneo con cámara
-  requiere HTTPS o `localhost` y quedó fuera del alcance de esta entrega.
-- Los datos de aforo inicial son simulados y no corresponden a inscripciones
-  reales registradas en la aplicación.
+- No existe backend ni base de datos.
+- Los datos agregados se guardan sólo en el navegador actual.
+- No existe autenticación real.
+- “Mi entrada” representa la última inscripción del usuario simulado.
+- El pronóstico depende del rango disponible de la API.
+- La acreditación usa el código escrito; el escaneo por cámara no forma parte de
+  esta entrega.
+- El aforo inicial es simulado.
+
+## Presentación y defensa
+
+La pauta sugerida de demo y preguntas técnicas está en
+[docs/guia-presentacion-defensa.md](docs/guia-presentacion-defensa.md).
