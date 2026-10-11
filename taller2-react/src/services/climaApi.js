@@ -48,7 +48,7 @@ export function describirClima(codigo) {
  * la API no tiene datos para esa fecha (el pronóstico de Open-Meteo
  * cubre aproximadamente los próximos 16 días).
  */
-export async function obtenerClima(lat, lon, fecha) {
+export async function obtenerClima(lat, lon, fecha, signal) {
   const parametros = new URLSearchParams({
     latitude: lat,
     longitude: lon,
@@ -58,7 +58,7 @@ export async function obtenerClima(lat, lon, fecha) {
     end_date: fecha,
   });
 
-  const respuesta = await fetch(`${URL_BASE}?${parametros}`);
+  const respuesta = await fetch(`${URL_BASE}?${parametros}`, { signal });
 
   // fetch sólo rechaza por errores de red: un 404 o 400 llega como
   // respuesta "exitosa", por eso revisamos ok explícitamente.
@@ -69,7 +69,16 @@ export async function obtenerClima(lat, lon, fecha) {
   const datos = await respuesta.json();
   const diario = datos.daily;
 
-  if (!diario || !diario.time || diario.time.length === 0) {
+  if (!diario || !Array.isArray(diario.time) || diario.time.length === 0) {
+    return null;
+  }
+
+  const valores = [
+    diario.temperature_2m_max?.[0],
+    diario.temperature_2m_min?.[0],
+    diario.weather_code?.[0],
+  ];
+  if (!valores.every(Number.isFinite)) {
     return null;
   }
 
