@@ -1,7 +1,15 @@
 # AcreditaQR — Gestión de eventos y acreditación QR
 
-Proyecto para la **Actividad Evaluada 1 — Desarrollo de Interfaz Frontend**
-(curso Desarrollo Web y Móvil, Universidad Andrés Bello).
+Proyecto del curso **Desarrollo Web y Móvil**, Universidad Andrés Bello.
+
+La entrega vigente corresponde al **Taller Evaluado 2 — Desarrollo de Frontend
+con React**. La implementación anterior de la Actividad Evaluada 1 se conserva
+en la raíz como referencia histórica, mientras que la versión evaluada actual
+está en:
+
+```text
+taller2-react/
+```
 
 ## Integrantes
 
@@ -9,70 +17,52 @@ Proyecto para la **Actividad Evaluada 1 — Desarrollo de Interfaz Frontend**
 - Cristian Perez
 - Ignacio Cornejo
 
+## Qué resuelve
 
+AcreditaQR centraliza la inscripción y acreditación de asistentes a eventos
+universitarios. Permite:
 
-## Problemática
+- buscar y filtrar eventos;
+- inscribirse mediante formulario validado;
+- generar una entrada digital con código y QR;
+- acreditar asistentes por código;
+- visualizar aforo, inscritos y asistentes;
+- consultar pronóstico del tiempo para eventos al aire libre mediante Open-Meteo.
 
-Los seminarios pequeños, capacitaciones, ferias y actividades académicas
-suelen gestionar sus inscripciones y el control de asistencia de forma
-manual (planillas, listas en papel), lo que dificulta controlar el aforo
-y verificar quién asistió realmente.
+## Tecnologías de la entrega actual
 
-**AcreditaQR** resuelve esto con una interfaz frontend que permite:
-
-- Publicar eventos y que el público se inscriba directamente.
-- Generar una entrada digital con un **código QR único** por inscripción.
-- Que el organizador haga **check-in** ingresando el código.
-- Ver un **dashboard en vivo** con el aforo, inscritos y asistentes por evento.
-- Emitir un **certificado en PDF** para quienes asistieron (extensión).
-
-No se implementa backend, base de datos ni APIs externas: todos los datos
-(eventos, participantes, inscripciones) se simulan en memoria mediante
-arrays y objetos JavaScript (`js/data.js`).
-
-## Tecnologías
-
-- HTML5 semántico
-- CSS3 propio (variables, Flexbox, motivo visual de "ticket perforado")
-- Bootstrap 5 (grid, navbar, modal, badges, progress bar)
-- JavaScript (DOM, eventos, validación de formularios, arrays de objetos)
-- [QRCode.js](https://davidshimjs.github.io/qrcodejs/) — generación de códigos QR en el navegador (librería JS, sin servidor)
-- [jsPDF](https://github.com/parallax/jsPDF) — generación de certificados en PDF en el navegador
+- React + Vite
+- JavaScript / JSX
+- Bootstrap 5 + CSS propio
+- JSON local
+- localStorage
+- Fetch API
+- Open-Meteo
+- qrcode.react
 - Git / GitHub / Git Flow
 
-## Estructura del proyecto
+## Ejecutar la versión React
 
-```
-proyecto/
-├── index.html
-├── css/
-│   └── styles.css
-├── js/
-│   ├── data.js      # datos simulados (eventos, participantes, inscripciones)
-│   └── app.js        # lógica de la aplicación
-├── assets/
-└── README.md
+```bash
+cd taller2-react
+npm install
+npm run dev
 ```
 
-## Cómo ejecutar
+## Documentación importante
 
-No requiere instalación. Basta con abrir `index.html` en un navegador,
-o servirlo con una extensión tipo "Live Server" para evitar restricciones
-de algunos navegadores con archivos locales.
+- [README de la entrega React](taller2-react/README.md)
+- [Diseño y wireframes](taller2-react/docs/diseno-interfaz.md)
+- [Uso de Inteligencia Artificial](taller2-react/docs/uso-ia.md)
+- [Guía de presentación y defensa](taller2-react/docs/guia-presentacion-defensa.md)
+- [Evidencias pendientes del equipo](taller2-react/docs/evidencias-pendientes.md)
 
-## Flujo funcional
+## Flujo de ramas
 
-1. **Eventos** — listado público con buscador y filtros por categoría/disponibilidad.
-2. **Inscripción** — formulario con validación (nombre, correo, teléfono) que genera una entrada con QR único y descuenta cupo.
-3. **Mi entrada** — muestra el ticket con el QR generado y el estado (inscrito / asistió).
-4. **Organizador → Check-in** — busca una entrada por su código y confirma la asistencia.
-5. **Organizador → Dashboard** — cupos, inscritos y asistentes por evento, actualizados en vivo.
-6. **Certificado** — una vez registrada la asistencia, se puede descargar un PDF de participación.
-
-## Flujo de trabajo (Git Flow)
-
-- `main`: versión estable.
+- `main`: versión estable de la entrega actual.
 - `develop`: rama de integración.
-- `feature/<nombre>`: una rama por funcionalidad o integrante (ej. `feature/inscripcion`, `feature/checkin`, `feature/dashboard`).
-- Los cambios se integran a `develop` mediante **Pull Request**, no con push directo.
-- Historial de commits descriptivo, reflejando el aporte de cada integrante.
+- `feature/<nombre>`: funcionalidades o mejoras concretas.
+- Pull Requests para integrar trabajo a `develop` y luego a `main`.
+
+La rama `master` queda como referencia histórica del repositorio y no debe
+usarse como rama principal de la entrega final.
