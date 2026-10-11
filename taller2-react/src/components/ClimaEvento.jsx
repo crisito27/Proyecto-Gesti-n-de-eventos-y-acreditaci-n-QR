@@ -1,6 +1,6 @@
 /* ClimaEvento — consume la API pública Open-Meteo.
 
-   Es el único componente con useEffect, porque es el único que
+   Utiliza useEffect porque
    necesita sincronizarse con algo externo a React (una petición
    HTTP). Maneja tres estados posibles: cargando, error y datos.
 
@@ -19,13 +19,14 @@ function ClimaEvento({ lat, lon, fecha }) {
     // "cancelado" evita actualizar el estado si el componente se
     // desmonta antes de que llegue la respuesta.
     let cancelado = false;
+    const controlador = new AbortController();
 
     async function consultar() {
       setCargando(true);
       setError(null);
 
       try {
-        const datos = await obtenerClima(lat, lon, fecha);
+        const datos = await obtenerClima(lat, lon, fecha, controlador.signal);
         if (!cancelado) {
           setClima(datos);
         }
@@ -44,6 +45,7 @@ function ClimaEvento({ lat, lon, fecha }) {
 
     return () => {
       cancelado = true;
+      controlador.abort();
     };
   }, [lat, lon, fecha]);
 
