@@ -1,13 +1,13 @@
 /* ModalInscripcion — formulario de inscripción.
 
-   El modal NO usa el JavaScript de Bootstrap: aparece y
-   desaparece por renderizado condicional desde el padre. Sólo se
-   aprovechan las clases visuales de Bootstrap.
+   El modal no usa el JavaScript de Bootstrap: aparece y desaparece
+   por renderizado condicional desde el padre. Bootstrap se utiliza
+   para estilos y utilidades.
 
    La validación es propia: cada campo se revisa en el submit y
    los mensajes de error se guardan en estado. */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatearFecha } from "../utils/formato";
 import ClimaEvento from "./ClimaEvento";
 
@@ -17,8 +17,23 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
   const [errores, setErrores] = useState({});
 
+  useEffect(() => {
+    function manejarTecla(eventoTeclado) {
+      if (eventoTeclado.key === "Escape") {
+        onCerrar();
+      }
+    }
+
+    document.addEventListener("keydown", manejarTecla);
+    return () => document.removeEventListener("keydown", manejarTecla);
+  }, [onCerrar]);
+
   function actualizarCampo(campo, valor) {
     setFormulario({ ...formulario, [campo]: valor });
+
+    if (errores[campo]) {
+      setErrores({ ...errores, [campo]: undefined });
+    }
   }
 
   function validar() {
@@ -28,7 +43,6 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
       nuevosErrores.nombre = "Ingresa tu nombre completo (mínimo 3 caracteres).";
     }
 
-    // Validación simple: algo, arroba, algo, punto, algo.
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formulario.email.trim())) {
       nuevosErrores.email = "Ingresa un correo electrónico válido.";
     }
@@ -46,7 +60,6 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
     const nuevosErrores = validar();
     setErrores(nuevosErrores);
 
-    // Object.keys sobre el objeto de errores: si está vacío, pasa.
     if (Object.keys(nuevosErrores).length > 0) {
       return;
     }
@@ -59,11 +72,18 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
   }
 
   return (
-    <div className="modal-fondo" role="dialog" aria-modal="true">
+    <div
+      className="modal-fondo"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="titulo-modal-inscripcion"
+    >
       <div className="modal-caja">
         <div className="modal-cabecera">
           <div>
-            <h2 className="h5 mb-1">Inscripción</h2>
+            <h2 id="titulo-modal-inscripcion" className="h5 mb-1">
+              Inscripción
+            </h2>
             <p className="text-muted small mb-0">
               {evento.nombre} — {formatearFecha(evento.fecha)}
             </p>
@@ -71,17 +91,17 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
           <button
             type="button"
             className="btn-close"
-            aria-label="Cerrar"
+            aria-label="Cerrar inscripción"
             onClick={onCerrar}
           ></button>
         </div>
 
         <div className="modal-cuerpo">
-          {/* La API pública se consulta aquí: antes de inscribirse,
-              la persona ve qué clima se espera ese día. */}
-          <div className="mb-3">
-            <ClimaEvento lat={evento.lat} lon={evento.lon} fecha={evento.fecha} />
-          </div>
+          {evento.exterior && (
+            <div className="mb-3">
+              <ClimaEvento lat={evento.lat} lon={evento.lon} fecha={evento.fecha} />
+            </div>
+          )}
 
           <form onSubmit={manejarEnvio} noValidate>
             <div className="mb-3">
@@ -94,9 +114,15 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 className={"form-control" + (errores.nombre ? " is-invalid" : "")}
                 value={formulario.nombre}
                 onChange={(e) => actualizarCampo("nombre", e.target.value)}
+                autoComplete="name"
+                required
+                aria-invalid={Boolean(errores.nombre)}
+                aria-describedby={errores.nombre ? "error-nombre" : undefined}
               />
               {errores.nombre && (
-                <div className="invalid-feedback">{errores.nombre}</div>
+                <div id="error-nombre" className="invalid-feedback">
+                  {errores.nombre}
+                </div>
               )}
             </div>
 
@@ -110,9 +136,15 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 className={"form-control" + (errores.email ? " is-invalid" : "")}
                 value={formulario.email}
                 onChange={(e) => actualizarCampo("email", e.target.value)}
+                autoComplete="email"
+                required
+                aria-invalid={Boolean(errores.email)}
+                aria-describedby={errores.email ? "error-email" : undefined}
               />
               {errores.email && (
-                <div className="invalid-feedback">{errores.email}</div>
+                <div id="error-email" className="invalid-feedback">
+                  {errores.email}
+                </div>
               )}
             </div>
 
@@ -127,14 +159,25 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 placeholder="912345678"
                 value={formulario.telefono}
                 onChange={(e) => actualizarCampo("telefono", e.target.value)}
+                autoComplete="tel"
+                inputMode="numeric"
+                required
+                aria-invalid={Boolean(errores.telefono)}
+                aria-describedby={errores.telefono ? "error-telefono" : undefined}
               />
               {errores.telefono && (
-                <div className="invalid-feedback">{errores.telefono}</div>
+                <div id="error-telefono" className="invalid-feedback">
+                  {errores.telefono}
+                </div>
               )}
             </div>
 
             <div className="d-flex justify-content-end gap-2">
-              <button type="button" className="btn btn-outline-secondary" onClick={onCerrar}>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={onCerrar}
+              >
                 Cancelar
               </button>
               <button type="submit" className="btn btn-primary-brand">
