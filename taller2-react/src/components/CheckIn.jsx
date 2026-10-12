@@ -53,7 +53,7 @@ function CheckIn({ inscripciones, buscarEvento, buscarParticipante, onConfirmar 
     <section className="card-panel p-3 p-md-4">
       <h2 className="h5 mb-1">Acreditación</h2>
       <p className="text-muted small">
-        Escribe o escanea el código de la entrada para registrar la asistencia.
+        Escribe el código de la entrada para registrar la asistencia.
       </p>
 
       <div className="input-group mb-3">

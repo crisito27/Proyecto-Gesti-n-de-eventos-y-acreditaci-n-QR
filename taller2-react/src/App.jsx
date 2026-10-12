@@ -17,6 +17,8 @@ import { useEffect, useState } from "react";
 import eventosIniciales from "./data/eventos.json";
 import { generarCodigo } from "./utils/formato";
 
+import DetalleEvento from "./components/DetalleEvento";
+import { validarInscripcion } from "./utils/inscripciones";
 import Navbar from "./components/Navbar";
 import ModalInscripcion from "./components/ModalInscripcion";
 import Eventos from "./pages/Eventos";
@@ -37,17 +39,24 @@ function leerEstadoGuardado() {
 }
 
 function App() {
-  const guardado = leerEstadoGuardado();
+  // Se lee localStorage una sola vez al montar el componente.
+  // useState con función evita repetir JSON.parse en cada render.
+  const [estadoInicial] = useState(leerEstadoGuardado);
 
   const [vista, setVista] = useState("eventos");
-  const [participantes, setParticipantes] = useState(guardado?.participantes ?? []);
-  const [inscripciones, setInscripciones] = useState(guardado?.inscripciones ?? []);
+  const [participantes, setParticipantes] = useState(
+    estadoInicial?.participantes ?? []
+  );
+  const [inscripciones, setInscripciones] = useState(
+    estadoInicial?.inscripciones ?? []
+  );
   const [inscripcionActualId, setInscripcionActualId] = useState(
-    guardado?.inscripcionActualId ?? null
+    estadoInicial?.inscripcionActualId ?? null
   );
 
   // Evento para el que está abierto el modal (null = modal cerrado).
   const [eventoAInscribir, setEventoAInscribir] = useState(null);
+  const [eventoDetalle, setEventoDetalle] = useState(null);
 
   // Persistencia simple en el navegador: cada vez que cambian las
   // inscripciones o los participantes, se guarda el estado.
@@ -82,13 +91,17 @@ function App() {
   // ---- Acciones ----
 
   function abrirInscripcion(eventoId) {
+    setEventoDetalle(null);
     setEventoAInscribir(buscarEvento(eventoId));
   }
 
   function confirmarInscripcion(datosFormulario) {
+    const error = validarInscripcion(eventoAInscribir, participantes, inscripciones, datosFormulario.email);
+    if (error) return error;
     const nuevoParticipante = {
       id: Date.now(),
       ...datosFormulario,
+      email: datosFormulario.email.trim().toLowerCase(),
     };
 
     const nuevaInscripcion = {
@@ -101,8 +114,8 @@ function App() {
 
     // Nunca se modifica el array existente: se crea uno nuevo.
     // Si mutáramos el array, React no detectaría el cambio.
-    setParticipantes([...participantes, nuevoParticipante]);
-    setInscripciones([...inscripciones, nuevaInscripcion]);
+    setParticipantes((actuales) => [...actuales, nuevoParticipante]);
+    setInscripciones((actuales) => [...actuales, nuevaInscripcion]);
     setInscripcionActualId(nuevaInscripcion.id);
 
     setEventoAInscribir(null);
@@ -110,8 +123,8 @@ function App() {
   }
 
   function confirmarAsistencia(inscripcionId) {
-    setInscripciones(
-      inscripciones.map((inscripcion) =>
+    setInscripciones((actuales) =>
+      actuales.map((inscripcion) =>
         inscripcion.id === inscripcionId
           ? { ...inscripcion, estado: "asistio" }
           : inscripcion
@@ -134,6 +147,7 @@ function App() {
             eventos={eventosIniciales}
             contarInscritos={contarInscritos}
             onInscribirse={abrirInscripcion}
+            onVerDetalle={(id) => setEventoDetalle(buscarEvento(id))}
           />
         )}
 
@@ -170,6 +184,10 @@ function App() {
 
       {/* Renderizado condicional del modal: sólo existe en el DOM
           cuando hay un evento seleccionado. */}
+      {eventoDetalle && (
+        <DetalleEvento evento={eventoDetalle} inscritos={contarInscritos(eventoDetalle.id)}
+          onInscribirse={abrirInscripcion} onCerrar={() => setEventoDetalle(null)} />
+      )}
       {eventoAInscribir && (
         <ModalInscripcion
           evento={eventoAInscribir}
