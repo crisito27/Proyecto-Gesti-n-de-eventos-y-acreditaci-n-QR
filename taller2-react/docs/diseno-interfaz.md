@@ -174,3 +174,59 @@ Inicio
   `localStorage`, ya que el enunciado no exige backend.
 - La API meteorológica aporta valor a eventos al aire libre antes de confirmar
   una inscripción.
+
+## Actualización del diseño de detalle
+
+Esta sección se documentó durante el cierre técnico; no constituye evidencia
+histórica de diseño previo. Desde cada tarjeta se abre un diálogo con nombre,
+descripción completa, fecha, lugar, organizador, categoría, ambiente y cupos.
+Sus acciones son Volver e Inscribirme (deshabilitada si está agotado). Escape
+cierra el diálogo y el elemento nativo `dialog` mantiene el foco modal.
+
+Flujo actualizado: Eventos → Ver detalle → Inscribirme → Validación → Entrada
+QR → Acreditación → Dashboard. La inscripción directa también se conserva.
+
+Tipografías: Space Grotesk para títulos y marca; Public Sans para texto y
+controles, con sans-serif como respaldo. Los títulos distinguen las secciones
+y el texto de cuerpo prioriza legibilidad en formularios y tarjetas.
+
+## Mapa de navegación actualizado
+
+```mermaid
+flowchart TD
+    N["Navegación principal"] --> E["Eventos"]
+    N --> T["Mi entrada"]
+    N --> O["Organizador"]
+    E --> F["Buscar y filtrar"]
+    F --> D["Detalle de evento"]
+    F --> I["Inscripción"]
+    D --> I
+    I --> V{"¿Datos válidos y cupo?"}
+    V -->|No| I
+    V -->|Sí| T
+    T --> Q["Ticket QR y estado"]
+    O --> A["Acreditación por código"]
+    O --> B["Dashboard"]
+    A --> C["Confirmar asistencia"]
+    C --> B
+```
+
+El detalle permanece disponible cuando no hay cupos. En ese caso, su botón de
+inscripción está deshabilitado. La inscripción directa desde la tarjeta se mantiene.
+
+## Distribución del detalle de evento
+
+El diálogo contiene estos elementos de arriba hacia abajo:
+
+| Zona | Contenido | Comportamiento |
+|---|---|---|
+| Cabecera | Nombre del evento y cerrar | Cierre por botón o Escape |
+| Descripción | Texto completo | Sin recorte de la tarjeta |
+| Información | Fecha, lugar, organizador y categoría | Lectura |
+| Ambiente | Interior o al aire libre | Lectura |
+| Cupos | Disponibles y capacidad total | Cálculo derivado |
+| Acciones | Volver e Inscribirme | Agotado deshabilita inscripción |
+
+Los wireframes gráficos editables del listado, detalle, inscripción, entrada y
+organizador acompañan la presentación de la entrega. Son documentación actual,
+no evidencia histórica anterior a la implementación.

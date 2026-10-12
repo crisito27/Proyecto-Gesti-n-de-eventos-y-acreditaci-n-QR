@@ -4,7 +4,7 @@
 
 import EventoCard from "./EventoCard";
 
-function ListaEventos({ eventos, contarInscritos, onInscribirse }) {
+function ListaEventos({ eventos, contarInscritos, onInscribirse, onVerDetalle }) {
   if (eventos.length === 0) {
     return (
       <div className="empty-state text-center py-5">
@@ -29,6 +29,7 @@ function ListaEventos({ eventos, contarInscritos, onInscribirse }) {
               evento={evento}
               inscritos={contarInscritos(evento.id)}
               onInscribirse={onInscribirse}
+        onVerDetalle={onVerDetalle}
             />
           </div>
         ))}

@@ -100,3 +100,28 @@ No se debe declarar una revisión que no ocurrió.
 La IA se utilizó como apoyo para diagnóstico, generación y revisión. La
 responsabilidad de probar, comprender y defender el código corresponde a los
 integrantes del equipo.
+
+## 7. Cierre técnico solicitado por Ignacio
+
+- Herramienta: ChatGPT/Codex (OpenAI).
+- Propósito: implementar pendientes de la comparación con la pauta.
+- Consulta representativa: “¿puedes hacerlo todo tú, lo que falta?”.
+- Resultado: detalle de evento, validación de aforo y duplicados al confirmar,
+  atribución y condiciones de API, documentación y verificaciones técnicas.
+- Verificación realizada por la herramienta: consultar `verificacion-entrega.md`.
+- Modificación humana: pendiente de revisión real por el equipo; no se atribuye
+  a Ignacio la autoría manual ni la comprobación personal de estos cambios.
+- Aprendizaje a comprobar en la defensa: explicar por qué validar en la acción
+  además de deshabilitar un botón, cómo se normaliza el correo y cómo se
+  comunican el detalle y la inscripción mediante props.
+
+Los registros anteriores que indican revisión humana pendiente siguen abiertos
+hasta que sus responsables realicen esa revisión. La herramienta no puede
+certificar aprendizajes personales ni reconstruir pruebas históricas de diseño.
+
+## Material de exposición preparado con IA
+
+ChatGPT/Codex preparó el mapa actualizado, wireframes editables y una
+presentación con notas a solicitud de Ignacio. Estos materiales describen la
+versión actual y no certifican diseño previo ni ensayo personal. El equipo
+debe revisar el contenido y adaptar la distribución propuesta antes de exponer.

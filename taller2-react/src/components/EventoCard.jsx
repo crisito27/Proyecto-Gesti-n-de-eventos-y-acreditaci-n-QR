@@ -4,7 +4,7 @@
 
 import { formatearFecha } from "../utils/formato";
 
-function EventoCard({ evento, inscritos, onInscribirse }) {
+function EventoCard({ evento, inscritos, onInscribirse, onVerDetalle }) {
   const cuposRestantes = evento.aforoMax - inscritos;
   const agotado = cuposRestantes <= 0;
 
@@ -51,6 +51,7 @@ function EventoCard({ evento, inscritos, onInscribirse }) {
           </span>
         </div>
 
+        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => onVerDetalle(evento.id)}>Ver detalle</button>
         <button
           type="button"
           className="btn btn-sm btn-inscribirse"

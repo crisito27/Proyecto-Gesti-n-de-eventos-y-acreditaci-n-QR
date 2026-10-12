@@ -16,6 +16,7 @@ const FORMULARIO_VACIO = { nombre: "", email: "", telefono: "" };
 function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
   const [errores, setErrores] = useState({});
+  const [errorInscripcion, setErrorInscripcion] = useState("");
 
   useEffect(() => {
     function manejarTecla(eventoTeclado) {
@@ -64,11 +65,12 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
       return;
     }
 
-    onConfirmar({
+    const error = onConfirmar({
       nombre: formulario.nombre.trim(),
       email: formulario.email.trim(),
       telefono: formulario.telefono.trim(),
     });
+    setErrorInscripcion(error || "");
   }
 
   return (
@@ -104,6 +106,7 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
           )}
 
           <form onSubmit={manejarEnvio} noValidate>
+            {errorInscripcion && <div className="alert alert-danger" role="alert">{errorInscripcion}</div>}
             <div className="mb-3">
               <label htmlFor="inscripcion-nombre" className="form-label">
                 Nombre completo

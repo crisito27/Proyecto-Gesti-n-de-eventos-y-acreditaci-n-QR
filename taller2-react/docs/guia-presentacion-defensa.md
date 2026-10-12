@@ -82,3 +82,51 @@ fue revisado o modificado por el equipo.
 - `src/components/ClimaEvento.jsx`: useEffect y estados de API.
 - `src/services/climaApi.js`: fetch y transformación de respuesta.
 - `src/components/CheckIn.jsx`: lógica de acreditación.
+
+## Guion de ensayo con la presentación
+
+Distribución propuesta, ajustable al tiempo asignado por el docente. No
+representa una declaración de autoría individual del código.
+
+| Diapositivas | Responsable propuesto | Explicación |
+|---|---|---|
+| 1 a 3 | Ignacio | Problema, usuarios y navegación |
+| 4 a 7 | Ignacio | Wireframes y criterios de diseño |
+| 8 a 9 | Benjamin | React, datos y API |
+| 10 | Cristian | Demo con clics y datos ficticios |
+| 11 | Cristian | IA y limitaciones |
+| 12 | Los tres | Preguntas de defensa |
+
+### Preparación de la demo
+
+Usar datos ficticios: Persona Demo, demo@example.com, teléfono 912345678.
+No utilizar datos personales de asistentes reales. Antes de exponer, confirmar
+que las fechas de los eventos exteriores estén dentro del pronóstico disponible.
+La aplicación conserva inscripciones entre recargas: usar un perfil de navegador
+de prueba limpio para iniciar una demo reproducible.
+
+Mostrar primero detalle del evento. Después inscripción inválida, inscripción
+válida, ticket, check-in, repetición de check-in y dashboard. Verificar el correo
+duplicado al intentar nuevamente el mismo evento con DEMO@example.com.
+
+Para mostrar error de API, cerrar el modal, activar Offline en las herramientas
+de red y volver a abrir la inscripción de un evento exterior. La API debe fallar
+y el formulario seguir disponible. Restaurar la conexión al terminar.
+
+### Respuestas adicionales
+
+**¿Por qué validar cupos al confirmar?** Porque la regla debe estar en la acción
+que registra la inscripción, además del botón deshabilitado de la tarjeta.
+
+**¿Cómo se detecta un correo duplicado?** Se normaliza con trim y toLowerCase,
+y se busca ese participante entre las inscripciones del mismo evento.
+
+**¿El QR se escanea con cámara?** No. El código QR se genera, pero el check-in
+actual requiere escribir o pegar su contenido.
+
+**¿Estos wireframes son evidencia de diseño previo?** Son documentación actual.
+Solo los documentos o bocetos auténticos de la etapa previa pueden respaldar
+que el diseño se planificó antes.
+
+**¿Puede abrirse el detalle de un evento lleno?** Sí. Solo su inscripción queda
+bloqueada, por lo que el usuario puede seguir consultando la información.

@@ -67,6 +67,7 @@ Verificaciones recomendadas antes de entregar:
 
 ```bash
 npm run lint
+node --test tests/*.test.js
 npm run build
 npm run preview
 ```
@@ -182,3 +183,37 @@ El reporte se encuentra en [docs/uso-ia.md](docs/uso-ia.md). Debe reflejar
 
 La pauta sugerida de demo y preguntas técnicas está en
 [docs/guia-presentacion-defensa.md](docs/guia-presentacion-defensa.md).
+
+## Detalle y reglas de inscripción
+
+Cada tarjeta permite consultar el detalle completo, incluso sin cupos. Al
+confirmar se vuelve a comprobar el aforo y se impide usar el mismo correo para
+inscribirse dos veces en un evento (ignorando mayúsculas y espacios exteriores).
+Estas reglas se aplican a las inscripciones locales: `aforoBase` no incluye
+identidades y no hay sincronización entre dispositivos.
+
+## Condiciones de Open-Meteo
+
+Consultadas el 12 de octubre de 2026 (UTC).
+La API abierta se utiliza sin clave para este proyecto educativo no comercial.
+Sus condiciones indican menos de 10.000 llamadas diarias, 5.000 por hora y 600
+por minuto. El servicio gratuito no garantiza disponibilidad. Los datos usan
+CC BY 4.0; la interfaz enlaza al proveedor y a la licencia junto al pronóstico,
+e indica el redondeo de temperaturas y la traducción de descripciones.
+La licencia de datos no elimina las restricciones del servicio gratuito.
+
+El pronóstico alcanza hasta 16 días, según modelo y disponibilidad. Datos
+incompletos muestran ausencia de pronóstico; un rechazo HTTP o fallo de red
+muestra un error sin impedir la inscripción. Antes de la demo, comprobar que
+las fechas de los eventos exteriores están dentro del rango disponible.
+
+Fuentes oficiales:
+- https://open-meteo.com/en/docs
+- https://open-meteo.com/en/terms
+- https://open-meteo.com/en/pricing
+- https://creativecommons.org/licenses/by/4.0/
+
+## Verificación de esta entrega
+
+Consultar [el registro de verificación](docs/verificacion-entrega.md). Las
+pruebas técnicas no sustituyen la revisión personal ni la defensa del equipo.
