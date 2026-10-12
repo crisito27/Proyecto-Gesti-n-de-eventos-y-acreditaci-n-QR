@@ -9,7 +9,7 @@ import ListaEventos from "../components/ListaEventos";
 
 const FILTROS_INICIALES = { texto: "", categoria: "", disponibilidad: "" };
 
-function Eventos({ eventos, contarInscritos, onInscribirse }) {
+function Eventos({ eventos, contarInscritos, onInscribirse, onVerDetalle }) {
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
 
   const eventosFiltrados = eventos.filter((evento) => {
@@ -52,6 +52,7 @@ function Eventos({ eventos, contarInscritos, onInscribirse }) {
         eventos={eventosFiltrados}
         contarInscritos={contarInscritos}
         onInscribirse={onInscribirse}
+        onVerDetalle={onVerDetalle}
       />
     </section>
   );

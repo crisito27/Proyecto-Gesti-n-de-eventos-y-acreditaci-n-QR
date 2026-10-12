@@ -17,6 +17,8 @@ import { useEffect, useState } from "react";
 import eventosIniciales from "./data/eventos.json";
 import { generarCodigo } from "./utils/formato";
 
+import DetalleEvento from "./components/DetalleEvento";
+import { validarInscripcion } from "./utils/inscripciones";
 import Navbar from "./components/Navbar";
 import ModalInscripcion from "./components/ModalInscripcion";
 import Eventos from "./pages/Eventos";
@@ -54,6 +56,7 @@ function App() {
 
   // Evento para el que está abierto el modal (null = modal cerrado).
   const [eventoAInscribir, setEventoAInscribir] = useState(null);
+  const [eventoDetalle, setEventoDetalle] = useState(null);
 
   // Persistencia simple en el navegador: cada vez que cambian las
   // inscripciones o los participantes, se guarda el estado.
@@ -88,13 +91,17 @@ function App() {
   // ---- Acciones ----
 
   function abrirInscripcion(eventoId) {
+    setEventoDetalle(null);
     setEventoAInscribir(buscarEvento(eventoId));
   }
 
   function confirmarInscripcion(datosFormulario) {
+    const error = validarInscripcion(eventoAInscribir, participantes, inscripciones, datosFormulario.email);
+    if (error) return error;
     const nuevoParticipante = {
       id: Date.now(),
       ...datosFormulario,
+      email: datosFormulario.email.trim().toLowerCase(),
     };
 
     const nuevaInscripcion = {
@@ -140,6 +147,7 @@ function App() {
             eventos={eventosIniciales}
             contarInscritos={contarInscritos}
             onInscribirse={abrirInscripcion}
+            onVerDetalle={(id) => setEventoDetalle(buscarEvento(id))}
           />
         )}
 
@@ -176,6 +184,10 @@ function App() {
 
       {/* Renderizado condicional del modal: sólo existe en el DOM
           cuando hay un evento seleccionado. */}
+      {eventoDetalle && (
+        <DetalleEvento evento={eventoDetalle} inscritos={contarInscritos(eventoDetalle.id)}
+          onInscribirse={abrirInscripcion} onCerrar={() => setEventoDetalle(null)} />
+      )}
       {eventoAInscribir && (
         <ModalInscripcion
           evento={eventoAInscribir}

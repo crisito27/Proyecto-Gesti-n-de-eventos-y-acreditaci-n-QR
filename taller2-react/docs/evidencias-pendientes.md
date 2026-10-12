@@ -66,3 +66,10 @@ Estas capturas sirven para la presentación y como respaldo si algo falla en viv
 El equipo debe preparar quién explica cada sección y ensayar la demo completa.
 Usar `docs/guia-presentacion-defensa.md` como pauta, pero cada integrante debe
 entender el flujo completo porque las preguntas pueden ser individuales.
+
+## Estado después del cierre técnico
+
+Se implementaron detalle de evento, validaciones de cupos/duplicados y
+atribución de API. Consultar [verificación](verificacion-entrega.md) para
+separar las pruebas realizadas de la demo visual pendiente. No se generaron
+capturas ficticias ni se atribuyeron aportes o aprendizajes a integrantes.

@@ -88,6 +88,7 @@ function ClimaEvento({ lat, lon, fecha }) {
         </span>
         <span className="text-muted ms-2">{describirClima(clima.codigo)}</span>
       </p>
+      <p className="small text-muted mt-2 mb-0">Datos: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. Temperaturas redondeadas; descripciones traducidas.</p>
     </div>
   );
 }
