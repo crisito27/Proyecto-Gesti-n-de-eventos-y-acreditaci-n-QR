@@ -8,6 +8,7 @@ La documentación interactiva Swagger queda en /docs y el esquema OpenAPI en
 no puede quedar desalineada de lo que la API realmente acepta y devuelve.
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -19,6 +20,7 @@ from app.core.config import settings
 from app.core.database import Base, engine
 from app.core.errores import ErrorDominio
 from app.core.mongo import crear_indices
+from app.core.realtime import gestor_realtime
 from app.routers import acreditaciones, eventos, indicadores, inscripciones, pagos, realtime, usuarios
 
 logger = logging.getLogger("acreditaqr")
@@ -50,6 +52,7 @@ stack con persistencia real.
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI):
     """Se ejecuta al arrancar y al apagar la aplicación."""
+    gestor_realtime.configurar_loop(asyncio.get_running_loop())
     # Crea las tablas si no existen. En un proyecto en producción esto lo
     # haría una herramienta de migraciones; aquí basta y es reproducible.
     Base.metadata.create_all(bind=engine)
