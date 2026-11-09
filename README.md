@@ -426,7 +426,8 @@ docker compose exec backend python -m pytest tests/ -v
 | `test_resumen_participacion_agrega_en_mongo` | Pipeline de agregación |
 | `test_validacion_de_entrada_devuelve_422` | Validación de Pydantic |
 | `test_recurso_inexistente_devuelve_404` | 404 |
-| `test_indicadores_reflejan_las_inscripciones` | Consultas agregadas |\n| `test_websocket_notifica_cambios_reales_del_backend` | Publicación de cambios REST a clientes WebSocket |
+| `test_indicadores_reflejan_las_inscripciones` | Consultas agregadas |
+| `test_websocket_notifica_cambios_reales_del_backend` | Publicación de cambios REST a clientes WebSocket |
 
 El frontend se verificó manualmente recorriendo el flujo completo en el
 navegador, incluyendo los estados de carga, error y vacío, y el comportamiento
