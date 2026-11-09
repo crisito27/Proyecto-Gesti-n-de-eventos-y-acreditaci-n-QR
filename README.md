@@ -408,7 +408,7 @@ borrador y sin descripción, para poder demostrar la validación al publicar.
 docker compose exec backend python -m pytest tests/ -v
 ```
 
-16 pruebas de API e integración incluidas. Las primeras 15 utilizan PostgreSQL y `mongomock` para aislar la bitácora; la prueba adicional verifica MongoDB real cuando se habilita expresamente:
+18 pruebas de API, concurrencia e integración incluidas. Las primeras 15 utilizan PostgreSQL y `mongomock` para aislar la bitácora; la prueba adicional verifica MongoDB real cuando se habilita expresamente:
 
 | Prueba | Qué verifica |
 |---|---|
@@ -428,6 +428,8 @@ docker compose exec backend python -m pytest tests/ -v
 | `test_recurso_inexistente_devuelve_404` | 404 |
 | `test_indicadores_reflejan_las_inscripciones` | Consultas agregadas |
 | `test_bitacora_acreditacion_en_mongo_real` | Escritura y lectura HTTP en una colección aislada de MongoDB real (opcional) |
+| `test_ultimo_cupo_no_se_sobrevende_con_inscripciones_simultaneas` | Solicitudes concurrentes no exceden aforo |
+| `test_pagos_simultaneos_reciben_comprobantes_unicos` | Pagos concurrentes reciben números únicos |
 
 Para ejecutar **también la integración con MongoDB real** (necesita el servicio `mongo`):
 

@@ -22,15 +22,16 @@ Caso 3.6: *Agenda de actividades y eventos*. Se identifican en el código y READ
 1. **Pruebas inaccesibles desde el contenedor**: el Dockerfile original sólo copiaba `app`. Se agrega `tests`.
 2. **Dependencias frontend sin instalación determinista**: `npm install` al iniciar Compose. Se sustituye por `npm ci` usando el lockfile existente.
 3. **Cupos bajo concurrencia**: el chequeo anterior leía el contador sin bloqueo, de modo que dos peticiones simultáneas podían pasar para el último cupo. Se agrega un bloqueo `SELECT FOR UPDATE` de la fila `eventos` que se mantiene hasta commit/rollback y se aplica a las operaciones que alteran el aforo/estado.
-4. **Uso real de MongoDB sin prueba independiente**: las pruebas existentes emplean `mongomock`. Se añade un caso opcional sobre un MongoDB real, integrado en CI.
-5. **Evidencia no verificable desde el código**: no debe afirmarse que Docker, frontend o pruebas pasaron sin logs, capturas o ejecución real. Se explicita en README.
+4. **Comprobantes bajo concurrencia**: el conteo simple podía generar el mismo correlativo en dos transacciones. Se reemplaza por máximo emitido bajo bloqueo transaccional, con prueba de pagos simultáneos.
+5. **Uso real de MongoDB sin prueba independiente**: las pruebas existentes emplean `mongomock`. Se añade un caso opcional sobre un MongoDB real, integrado en CI.
+6. **Evidencia no verificable desde el código**: no debe afirmarse que Docker, frontend o pruebas pasaron sin logs, capturas o ejecución real. Se explicita en README.
 
 ## Riesgos pendientes
 
 - No hay login ni autorización por rol: los endpoints administrativos son públicos. El equipo debe justificarlo como limitación académica o implementar control de acceso antes de un despliegue accesible desde Internet.
 - No hay migraciones versionadas; `Base.metadata.create_all` sólo inicializa tablas faltantes, no migra cambios estructurales sobre bases existentes.
 - El índice SQL único `(evento_id, usuario_id)` evita duplicados, pero también impide volver a inscribirse luego de cancelar; el mensaje de error de ese caso debe aclararse o se debe diseñar una reactivación coherente con pagos previos.
-- El correlativo de comprobantes basado en el conteo de pagos puede entrar en conflicto ante pagos simultáneos; pendiente de resolver con una secuencia o un bloqueo transaccional.
+- El correlativo de comprobantes se reforzó con bloqueo transaccional de PostgreSQL y cálculo del máximo emitido; se agregó una prueba con pagos simultáneos. No sustituye la recomendación de una secuencia en un entorno de producción.
 - La actualización SQL y el registro MongoDB no forman una transacción distribuida; una falla entre ambas operaciones puede dejar un acceso acreditado sin bitácora. Para un entorno real se recomienda un patrón outbox/reintentos.
 - El modo GitHub Pages existente no aloja el backend ni ambas bases; la demostración Full Stack requiere Docker Compose u otro despliegue completo.
 - La sección de IA en `docs/uso-ia.md` tiene entradas que el equipo debe completar y validar; no se deben inventar experiencias individuales.

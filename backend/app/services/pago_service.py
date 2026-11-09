@@ -8,7 +8,7 @@ comprobante que habilita la acreditación.
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.core.errores import Conflicto, NoEncontrado, ReglaNegocio
@@ -20,10 +20,13 @@ from app.services import inscripcion_service
 def _siguiente_numero_comprobante(db: Session) -> str:
     """Correlativo del año en curso: CMP-2026-000001."""
     anio = datetime.now(timezone.utc).year
-    emitidos = db.scalar(
-        select(func.count(Pago.id)).where(Pago.numero_comprobante.like(f"CMP-{anio}-%"))
-    ) or 0
-    return f"CMP-{anio}-{emitidos + 1:06d}"
+    ultimo = db.scalar(
+        select(func.max(Pago.numero_comprobante)).where(
+            Pago.numero_comprobante.like(f"CMP-{anio}-%")
+        )
+    )
+    siguiente = int(ultimo.rsplit("-", 1)[-1]) + 1 if ultimo else 1
+    return f"CMP-{anio}-{siguiente:06d}"
 
 
 def obtener_pago(db: Session, pago_id: int) -> Pago:
@@ -38,6 +41,10 @@ def listar_pagos(db: Session) -> list[Pago]:
 
 
 def registrar_pago(db: Session, inscripcion_id: int, metodo: MetodoPago) -> Pago:
+    # Un bloqueo transaccional global para comprobantes evita que dos pagos
+    # simultáneos calculen el mismo correlativo. PostgreSQL lo libera en commit
+    # o rollback; no requiere migraciones ni cambios en la tabla.
+    db.execute(text("SELECT pg_advisory_xact_lock(:clave)"), {"clave": 7267001})
     inscripcion = inscripcion_service.obtener_inscripcion(db, inscripcion_id)
 
     if inscripcion.estado == EstadoInscripcion.CANCELADA:
