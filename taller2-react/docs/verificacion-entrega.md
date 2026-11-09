@@ -1,44 +1,52 @@
-# Verificación del cierre de requisitos
+# Verificación del cierre técnico — rama feature/realtime
 
-Realizada por ChatGPT/Codex el 12 de octubre de 2026 UTC, a solicitud de Ignacio.
-No acredita revisión personal del equipo ni diseño previo.
+Revisión técnica del repositorio realizada el 9 de noviembre de 2026. Esta revisión distingue validaciones automatizadas de comprobaciones que requieren ejecutar la aplicación en un navegador real.
 
-## Resultados
+## Estado de validación automatizada
 
-| Comprobación | Resultado |
+| Comprobación | Resultado observado |
 |---|---|
-| Instalación con npm ci | Correcta |
-| npm run lint | Correcto |
-| npm run build | Correcto |
-| node --test tests/*.test.js | 5 pruebas correctas |
-| HTTP real a Open-Meteo | 200 y JSON diario válido para el 18 de octubre de 2026 |
-| Revisión visual en navegador | Pendiente: Chromium no está instalado y su descarga falló |
-| Flujo completo con clics y capturas responsive | Pendiente por la misma limitación |
+| Backend: instalación de dependencias | Correcta en GitHub Actions |
+| Backend: carga de datos iniciales | Correcta en GitHub Actions |
+| Backend: suite pytest | Correcta en GitHub Actions; 16 pruebas |
+| Frontend: instalación reproducible con npm ci | Correcta en GitHub Actions |
+| Frontend: ESLint | Correcto en GitHub Actions en el commit `6043bdb` |
+| Frontend: build de producción | Correcto en GitHub Actions en el commit `6043bdb` |
+| Escaneo QR con cámara | Implementado en `e42a604`; requiere validación manual en dispositivos/navegadores |
+| Revisión visual completa y responsive | Pendiente de ejecución por el equipo |
+| Flujo completo con clics en navegador | Pendiente de ejecución por el equipo |
 
-La respuesta meteorológica real se obtuvo para latitud -33.0238, longitud
--71.5531 y timezone=auto. Incluyó fecha 2026-10-18, mínima 13.4, máxima 18.7 y
-weather_code=3. Es una observación de la consulta, no un pronóstico garantizado.
+**Ejecución automatizada confirmada:** workflow `Validación continua`, run `42704118936`, commit `6043bdb934a8fe0c477f289738669a801485dd25`. Los trabajos backend y frontend finalizaron con `success`. Esta ejecución es anterior a la incorporación del escáner de cámara (`e42a604`); por eso no acredita todavía el lint/build del último commit.
 
-Las cinco pruebas cubren cupo disponible, cupo lleno, correo duplicado con
-normalización, mismo correo en otro evento y evento inexistente. No sustituyen
-las pruebas de interacción, persistencia, acreditación y diseño en navegador.
+## Cambios técnicos incluidos en el cierre
 
-## Demo manual pendiente
+- Limpieza garantizada de conexiones WebSocket al desconectar o salir del endpoint.
+- Prueba de integración que crea un evento por REST y verifica la notificación recibida por WebSocket.
+- Workflow CI con PostgreSQL y MongoDB para backend y con lint/build para React.
+- Correcciones de ESLint detectadas por la primera ejecución de CI.
+- Escáner QR opcional con cámara mediante la API nativa `BarcodeDetector`; mantiene ingreso manual si el navegador no soporta lectura QR.
 
-1. Ejecutar npm run dev dentro de taller2-react.
-2. Buscar y filtrar eventos; abrir el detalle de un evento agotado.
-3. Enviar formulario inválido; corregirlo y generar una entrada.
-4. Repetir el correo en ese evento y comprobar el rechazo.
-5. Acreditar el código, intentar acreditarlo de nuevo y comprobar el dashboard.
-6. Recargar y comprobar persistencia.
-7. Abrir inscripción de evento exterior para consultar clima.
-8. Desactivar red antes de abrirlo y comprobar error sin bloquear inscripción.
-9. Repetir en anchos de celular y escritorio; tomar capturas reales.
+## Validaciones manuales que debe realizar el equipo
 
-## Pendientes personales
+1. Ejecutar `docker compose up --build` y cargar datos con `docker compose exec backend python -m app.seed`.
+2. Buscar y filtrar eventos; abrir el detalle de uno sin cupos.
+3. Enviar el formulario con datos inválidos y verificar los mensajes.
+4. Completar una inscripción válida y comprobar el ticket QR.
+5. Repetir el mismo correo para el mismo evento y verificar el rechazo.
+6. Si corresponde, probar pago simulado y comprobante.
+7. Escanear el QR con cámara en un navegador compatible y probar también el ingreso manual.
+8. Acreditar una entrada y volver a intentarlo; comprobar el rechazo del duplicado.
+9. Revisar Dashboard y Bitácora; confirmar los cambios en dos ventanas mediante WebSocket.
+10. Recargar **Mi entrada** y verificar que se recupera desde la API.
+11. Probar en móvil y escritorio, tomar capturas reales y conservarlas como evidencia.
+12. Verificar los estados de carga, error, vacío y reintento; probar el comportamiento sin conexión.
 
-- Aportar evidencia auténtica del diseño previo, si existe.
-- Revisar el código y completar las modificaciones humanas del reporte de IA.
-- Contribuciones reales e identificables de los integrantes; estos cambios de
-  Codex no sustituyen la participación individual.
-- Ensayar la presentación y defensa con la guía ya incluida.
+## Pendientes que no se pueden fabricar
+
+- Adjuntar evidencia auténtica y fechada del diseño previo, si existe.
+- Completar y revisar el reporte de uso de IA con la participación real de cada integrante.
+- Aportar contribuciones individuales verificables desde las cuentas de los integrantes; no fabricar commits históricos.
+- Ejecutar la demo manual, guardar capturas y ensayar la defensa.
+- Probar el escáner en el teléfono/navegador concreto que se usará en la presentación.
+
+Esta lista no certifica una nota ni reemplaza la revisión del docente. La ejecución automatizada no equivale a una demostración visual ni a una defensa oral.

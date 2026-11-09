@@ -90,8 +90,9 @@ configuración, con reglas de negocio demostrables y Swagger.
 
 **Resultado:** backend organizado en `core/`, `models/`, `schemas/`,
 `services/` y `routers/`, con 29 endpoints, errores de dominio traducidos a
-HTTP por un manejador central, y 15 pruebas automatizadas que la herramienta
-ejecutó contra PostgreSQL real antes de entregarlo.
+HTTP por un manejador central, y 15 pruebas automatizadas que la herramienta ejecutó contra PostgreSQL real
+antes de entregarlo. En el cierre de la rama feature/realtime se añadió una
+prueba de integración WebSocket, por lo que la suite actual contiene 16 pruebas.
 
 **Validación humana:** se levantó con Docker Compose en la máquina del equipo,
 se cargaron los datos de prueba y se recorrió el flujo completo desde Swagger:
@@ -180,3 +181,31 @@ es mejor estudiarlas que declararlas.)*
 | Capa de servicios del frontend y estados | *(completar)* |
 | Docker Compose y variables de entorno | *(completar)* |
 | Integración de la API pública | *(completar)* |
+
+
+---
+
+### 7. Cierre técnico de la rama feature/realtime con ChatGPT
+
+**Herramienta:** ChatGPT (OpenAI), modelo GPT-6 en esta sesión.
+
+**Propósito:** revisión de calidad, depuración, integración en tiempo real y mejora del flujo de acreditación.
+
+**Solicitud representativa:** *"Quiero que dejes terminado el trabajo ahora en la rama que creamos"*, con la condición previa de trabajar exclusivamente en `feature/realtime` y no modificar `master` ni `backup/pre-realtime`.
+
+**Cambios realizados con asistencia de IA:**
+- Se garantizó la limpieza de conexiones WebSocket en el bloque `finally` del endpoint.
+- Se agregó una prueba que crea un evento mediante REST y comprueba la notificación recibida por WebSocket.
+- Se incorporó GitHub Actions para ejecutar pruebas de backend y validaciones de frontend.
+- Se corrigieron errores de ESLint detectados por la ejecución automatizada.
+- Se incorporó lectura de QR con cámara mediante `BarcodeDetector`, con ingreso manual como alternativa cuando el navegador no ofrece esa API.
+
+**Validación automatizada observada:** en el commit `6043bdb`, GitHub Actions informó éxito para el trabajo de backend (instalación, seed y 16 pruebas) y para el trabajo de frontend (instalación, ESLint y build). Esa ejecución antecede al último cambio de escáner de cámara; la ejecución de CI del commit posterior debe revisarse antes de declarar todo validado.
+
+**Validación humana pendiente:** el equipo debe revisar el código, probar el escáner en el dispositivo real, recorrer el flujo completo en navegador y completar las evidencias. Esta herramienta no realizó la prueba física de cámara ni la presentación oral.
+
+**Aprendizaje a preparar para la defensa:** un WebSocket informa que algo cambió, pero REST sigue entregando los datos actuales; el gestor en memoria sirve para una sola instancia, y una instalación con múltiples workers necesita un mecanismo compartido como Redis Pub/Sub. El escáner QR depende de las capacidades del navegador y de permiso de cámara, por lo que debe conservarse una alternativa manual.
+
+## Qué puede explicar el equipo
+
+*(Completar honestamente antes de la entrega. Si hay partes que no se dominan, es mejor estudiarlas que declararlas.)*

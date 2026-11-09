@@ -440,8 +440,10 @@ La suite automatizada del frontend se ejecuta en GitHub Actions mediante `npm ci
   el modelo de datos ya contempla el campo `rol` para soportarlo.
 - **El pago es simulado.** No hay pasarela real: la transacción se aprueba
   siempre y emite un comprobante. Es lo que el enunciado permite.
-- **La acreditación es por código escrito.** El escaneo con cámara requiere
-  HTTPS o `localhost` y quedó fuera del alcance.
+- **El escaneo QR depende del navegador.** El check-in permite usar cámara
+  mediante `BarcodeDetector` cuando está disponible y se concede permiso; el
+  acceso a cámara requiere HTTPS o `localhost`. Si no hay soporte, se mantiene
+  el ingreso manual del código.
 - **El esquema se crea con `create_all`, no con migraciones versionadas.** Es
   reproducible pero no permite evolucionar el esquema conservando datos. Con
   Alembic sería lo correcto en un proyecto en producción.
