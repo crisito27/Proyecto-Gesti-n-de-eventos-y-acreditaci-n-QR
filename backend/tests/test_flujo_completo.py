@@ -288,3 +288,85 @@ def test_indicadores_reflejan_las_inscripciones(cliente, evento_pagado):
     assert fila["confirmados"] == 1
     assert fila["recaudado"] == 5000.0
     assert fila["cupos_disponibles"] == 1
+
+
+# --------------------------------------------------------------------------
+# Concurrencia real contra PostgreSQL: varias sesiones y transacciones.
+# --------------------------------------------------------------------------
+
+def test_ultimo_cupo_no_se_sobrevende_con_inscripciones_simultaneas(cliente, evento_pagado):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    from uuid import uuid4
+
+    from app.core.database import SessionLocal
+    from app.core.errores import Conflicto
+    from app.services import inscripcion_service
+
+    evento_id = evento_pagado["id"]  # aforo de 2
+    usuarios = []
+    for indice in range(5):
+        respuesta = cliente.post(
+            "/api/usuarios",
+            json={
+                "nombre": f"Simultaneo {indice}",
+                "email": f"concurrente.{uuid4().hex}@ejemplo.cl",
+                "telefono": "912345678",
+            },
+        )
+        assert respuesta.status_code == 201, respuesta.text
+        usuarios.append(respuesta.json()["id"])
+
+    barrera = Barrier(len(usuarios))
+
+    def intentar(usuario_id):
+        with SessionLocal() as db:
+            barrera.wait(timeout=15)
+            try:
+                inscripcion_service.crear_inscripcion(db, evento_id, usuario_id)
+                return "inscrito"
+            except Conflicto as exc:
+                assert exc.codigo == "aforo_completo"
+                return "sin_cupo"
+
+    with ThreadPoolExecutor(max_workers=len(usuarios)) as ejecutor:
+        resultados = list(ejecutor.map(intentar, usuarios))
+
+    assert resultados.count("inscrito") == 2
+    assert resultados.count("sin_cupo") == 3
+    actualizado = cliente.get(f"/api/eventos/{evento_id}").json()
+    assert actualizado["inscritos"] == 2
+    assert actualizado["cupos_disponibles"] == 0
+
+
+def test_pagos_simultaneos_reciben_comprobantes_unicos(cliente, evento_pagado):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    from uuid import uuid4
+
+    from app.core.database import SessionLocal
+    from app.models import MetodoPago
+    from app.services import pago_service
+
+    evento_id = evento_pagado["id"]
+    inscripciones = []
+    for nombre in ("Primera", "Segunda"):
+        respuesta = _inscribir(
+            cliente, evento_id, nombre, f"pago.{uuid4().hex}@ejemplo.cl"
+        )
+        assert respuesta.status_code == 201, respuesta.text
+        inscripciones.append(respuesta.json()["id"])
+
+    barrera = Barrier(2)
+
+    def pagar(inscripcion_id):
+        with SessionLocal() as db:
+            barrera.wait(timeout=15)
+            pago = pago_service.registrar_pago(db, inscripcion_id, MetodoPago.TARJETA)
+            return pago.numero_comprobante
+
+    with ThreadPoolExecutor(max_workers=2) as ejecutor:
+        comprobantes = list(ejecutor.map(pagar, inscripciones))
+
+    assert comprobantes[0] != comprobantes[1]
+    assert all(numero.startswith("CMP-") for numero in comprobantes)

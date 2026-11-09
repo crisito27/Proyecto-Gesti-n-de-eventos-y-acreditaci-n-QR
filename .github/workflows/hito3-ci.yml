@@ -1,0 +1,52 @@
+name: Hito 3 - Verificacion Full Stack
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: taller2-react
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: taller2-react/package-lock.json
+      - name: Instalar dependencias reproducibles
+        run: npm ci
+      - name: Lint React
+        run: npm run lint
+      - name: Compilar React
+        run: npm run build
+
+  api-postgres-mongo:
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_USER: acreditaqr_ci
+      POSTGRES_PASSWORD: solo_desarrollo_ci
+      POSTGRES_DB: acreditaqr_ci
+      MONGO_DB: acreditaqr_ci
+      CORS_ORIGENES: http://localhost:5173
+      DEBUG: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arrancar PostgreSQL, MongoDB y API
+        run: docker compose up -d --build --wait postgres mongo backend
+      - name: Cargar datos de prueba
+        run: docker compose exec -T backend python -m app.seed
+      - name: Probar API, PostgreSQL y MongoDB real
+        run: docker compose exec -T -e RUN_MONGO_INTEGRACION=1 backend python -m pytest tests/ -v
+      - name: Logs ante errores
+        if: failure()
+        run: docker compose logs --no-color --tail=150
+      - name: Limpiar servicios y datos de CI
+        if: always()
+        run: docker compose down -v --remove-orphans

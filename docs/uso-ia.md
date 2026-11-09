@@ -180,3 +180,12 @@ es mejor estudiarlas que declararlas.)*
 | Capa de servicios del frontend y estados | *(completar)* |
 | Docker Compose y variables de entorno | *(completar)* |
 | Integración de la API pública | *(completar)* |
+
+
+## Revisión de rúbrica y correcciones asistidas — 9 de noviembre de 2026
+
+- **Herramienta:** ChatGPT (GPT-6), acceso autorizado a GitHub por conector.
+- **Propósito y prompt:** el usuario solicitó revisar el repositorio frente a la rúbrica unificada del Hito 3 y corregir deficiencias detectadas.
+- **Resultado propuesto:** bloqueo transaccional de eventos durante inscripción y cambios de aforo, Dockerfile con pruebas disponibles, instalación reproducible de dependencias del frontend, prueba optativa contra MongoDB real y workflow de CI para React/API/SQL/NoSQL.
+- **Validación técnica:** revisión estática del contenido y coherencia entre archivos. El resultado de GitHub Actions debe consultarse después de ejecutarse; no se afirma aquí que las pruebas hayan pasado.
+- **Validación humana y aprendizaje:** **pendiente de completar por el equipo**, tras revisar la PR, levantar los contenedores, reproducir los flujos reales y explicar por qué `SELECT FOR UPDATE` evita la carrera por el último cupo. No declarar esta verificación como realizada hasta ejecutarla.

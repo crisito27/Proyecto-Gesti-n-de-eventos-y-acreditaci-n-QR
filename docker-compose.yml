@@ -86,7 +86,7 @@ services:
       # El navegador del usuario llama a la API desde fuera de Docker,
       # por eso aquí sí corresponde localhost.
       VITE_API_URL: http://localhost:${BACKEND_PORT:-8000}/api
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     volumes:
