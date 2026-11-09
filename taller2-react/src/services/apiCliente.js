@@ -48,12 +48,7 @@ async function solicitar(ruta, opciones = {}) {
     return null;
   }
 
-  let cuerpo = null;
-  try {
-    cuerpo = await respuesta.json();
-  } catch {
-    cuerpo = null;
-  }
+  const cuerpo = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
     // Errores de dominio: { codigo, mensaje }.
