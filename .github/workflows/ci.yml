@@ -1,0 +1,82 @@
+name: Validación continua
+
+on:
+  push:
+    branches: [master, develop, "feature/**"]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: acreditaqr
+          POSTGRES_PASSWORD: acreditaqr
+          POSTGRES_DB: acreditaqr
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U acreditaqr -d acreditaqr"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_USER: acreditaqr
+      POSTGRES_PASSWORD: acreditaqr
+      POSTGRES_DB: acreditaqr
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      MONGO_URI: mongodb://localhost:27017
+      MONGO_DB: acreditaqr_registros
+      CORS_ORIGENES: http://localhost:5173,http://localhost:4173
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Instalar dependencias del backend
+        run: pip install -r requirements.txt
+        working-directory: backend
+      - name: Cargar datos iniciales
+        run: python -m app.seed
+        working-directory: backend
+      - name: Ejecutar pruebas del backend
+        run: python -m pytest tests/ -v
+        working-directory: backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: taller2-react/package-lock.json
+      - name: Instalar dependencias del frontend
+        run: npm ci
+        working-directory: taller2-react
+      - name: Revisar calidad del código
+        run: npm run lint
+        working-directory: taller2-react
+      - name: Generar compilación de producción
+        run: npm run build
+        working-directory: taller2-react

@@ -288,3 +288,34 @@ def test_indicadores_reflejan_las_inscripciones(cliente, evento_pagado):
     assert fila["confirmados"] == 1
     assert fila["recaudado"] == 5000.0
     assert fila["cupos_disponibles"] == 1
+
+
+def test_websocket_notifica_cambios_reales_del_backend(cliente):
+    """Un cambio persistido por REST se publica a los clientes WebSocket."""
+    categorias = cliente.get("/api/categorias").json()
+    organizadores = cliente.get("/api/organizadores").json()
+    assert categorias and organizadores, "Ejecuta `python -m app.seed` antes de las pruebas"
+
+    with cliente.websocket_connect("/ws") as websocket:
+        respuesta = cliente.post(
+            "/api/eventos",
+            json={
+                "organizador_id": organizadores[0]["id"],
+                "categoria_id": categorias[0]["id"],
+                "nombre": "Evento de prueba WebSocket",
+                "descripcion": "Verifica la notificación en tiempo real.",
+                "fecha": "2030-01-15",
+                "lugar": "Sala de pruebas",
+                "aforo_max": 20,
+                "precio": "0",
+            },
+        )
+
+        assert respuesta.status_code == 201, respuesta.text
+        mensaje = websocket.receive_json()
+
+    assert mensaje == {
+        "tipo": "evento.creado",
+        "recurso": "eventos",
+        "recurso_id": respuesta.json()["id"],
+    }

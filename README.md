@@ -408,7 +408,7 @@ borrador y sin descripción, para poder demostrar la validación al publicar.
 docker compose exec backend python -m pytest tests/ -v
 ```
 
-15 pruebas automatizadas sobre la API, ejecutadas contra PostgreSQL real:
+16 pruebas automatizadas sobre la API, ejecutadas contra PostgreSQL real y MongoDB simulado para los casos que no requieren el servidor:
 
 | Prueba | Qué verifica |
 |---|---|
@@ -426,7 +426,7 @@ docker compose exec backend python -m pytest tests/ -v
 | `test_resumen_participacion_agrega_en_mongo` | Pipeline de agregación |
 | `test_validacion_de_entrada_devuelve_422` | Validación de Pydantic |
 | `test_recurso_inexistente_devuelve_404` | 404 |
-| `test_indicadores_reflejan_las_inscripciones` | Consultas agregadas |
+| `test_indicadores_reflejan_las_inscripciones` | Consultas agregadas |\n| `test_websocket_notifica_cambios_reales_del_backend` | Publicación de cambios REST a clientes WebSocket |
 
 El frontend se verificó manualmente recorriendo el flujo completo en el
 navegador, incluyendo los estados de carga, error y vacío, y el comportamiento
@@ -531,3 +531,13 @@ principales, archivos o decisiones en que ayudó, cambios revisados por el equip
 y pruebas realizadas por los integrantes. La IA no sustituye la validación:
 cada integrante debe poder explicar el flujo React → API REST/WebSocket →
 servicios → PostgreSQL/MongoDB y las limitaciones descritas en esta sección.
+
+
+## 13. Integración continua
+
+El flujo de GitHub Actions definido en `.github/workflows/ci.yml` valida cada
+push a `master`, `develop` y ramas `feature/**`, además de los Pull Requests
+hacia las ramas de integración. Ejecuta la suite del backend con PostgreSQL y
+MongoDB como servicios, y comprueba en el frontend la instalación reproducible,
+el análisis ESLint y la compilación de producción. El resultado de cada
+ejecución queda visible en la pestaña **Actions** del repositorio.
