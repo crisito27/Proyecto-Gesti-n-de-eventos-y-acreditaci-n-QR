@@ -21,6 +21,9 @@ export function useRecurso(consulta, depende = [], opciones = {}) {
   const [cargando, setCargando] = useState(activo);
   const [error, setError] = useState(null);
 
+  // La lista depende del contrato del hook: cada consumidor entrega sus
+  // dependencias explícitas para invalidar la consulta.
+  // eslint-disable-next-line react-hooks/use-memo
   const ejecutar = useCallback(async (señal) => {
     setCargando(true);
     setError(null);
@@ -39,10 +42,7 @@ export function useRecurso(consulta, depende = [], opciones = {}) {
   }, depende);
 
   useEffect(() => {
-    if (!activo) {
-      setCargando(false);
-      return undefined;
-    }
+    if (!activo) return undefined;
     const señal = { cancelado: false };
     ejecutar(señal);
     return () => {

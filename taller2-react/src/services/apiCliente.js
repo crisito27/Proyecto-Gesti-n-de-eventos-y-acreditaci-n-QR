@@ -52,7 +52,7 @@ async function solicitar(ruta, opciones = {}) {
   try {
     cuerpo = await respuesta.json();
   } catch {
-    cuerpo = null;
+    // Algunas respuestas exitosas (o errores de proxy) pueden no traer JSON.
   }
 
   if (!respuesta.ok) {
