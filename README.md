@@ -408,7 +408,7 @@ borrador y sin descripción, para poder demostrar la validación al publicar.
 docker compose exec backend python -m pytest tests/ -v
 ```
 
-15 pruebas automatizadas sobre la API, ejecutadas contra PostgreSQL real:
+16 pruebas de API e integración incluidas. Las primeras 15 utilizan PostgreSQL y `mongomock` para aislar la bitácora; la prueba adicional verifica MongoDB real cuando se habilita expresamente:
 
 | Prueba | Qué verifica |
 |---|---|
@@ -427,16 +427,29 @@ docker compose exec backend python -m pytest tests/ -v
 | `test_validacion_de_entrada_devuelve_422` | Validación de Pydantic |
 | `test_recurso_inexistente_devuelve_404` | 404 |
 | `test_indicadores_reflejan_las_inscripciones` | Consultas agregadas |
+| `test_bitacora_acreditacion_en_mongo_real` | Escritura y lectura HTTP en una colección aislada de MongoDB real (opcional) |
 
-El frontend se verificó manualmente recorriendo el flujo completo en el
-navegador, incluyendo los estados de carga, error y vacío, y el comportamiento
-responsive.
+Para ejecutar **también la integración con MongoDB real** (necesita el servicio `mongo`):
+
+```bash
+docker compose exec -e RUN_MONGO_INTEGRACION=1 backend python -m pytest tests/ -v
+```
+
+Un workflow de GitHub Actions (`.github/workflows/hito3-ci.yml`) comprueba el
+`lint` y `build` de React, inicia PostgreSQL/MongoDB y corre las pruebas con
+MongoDB real en una base efímera de CI. **Consulta el estado del workflow o PR**:
+la existencia del YAML no es evidencia de una ejecución aprobada.
+
+La demostración manual en navegador (inscribir → pagar → acreditar → leer
+bitácora, además de carga, error, vacío y responsive) debe documentarse con
+capturas o un video obtenidos durante la ejecución; no se aportan capturas
+simuladas como evidencias reales.
 
 ---
 
 ## 10. Limitaciones conocidas
 
-- **No hay autenticación.** Cualquiera puede acceder al panel del organizador.
+- **No hay autenticación ni autorización por rol.** Cualquiera puede invocar endpoints de administración, consultar inscripciones y acceder al panel del organizador.
   Implementar sesiones y autorización por rol excedía el alcance de este hito;
   el modelo de datos ya contempla el campo `rol` para soportarlo.
 - **El pago es simulado.** No hay pasarela real: la transacción se aprueba

@@ -155,6 +155,24 @@ def obtener_evento(db: Session, evento_id: int) -> Evento:
     return evento
 
 
+def bloquear_evento(db: Session, evento_id: int) -> Evento:
+    """Bloquea la fila hasta commit/rollback para serializar cambios de aforo.
+
+    Evita que dos inscripciones concurrentes lean el mismo último cupo o
+    que una edición reduzca el aforo al mismo tiempo que alguien se inscribe.
+    Requiere PostgreSQL (SELECT FOR UPDATE).
+    """
+    evento = db.scalar(
+        select(Evento)
+        .where(Evento.id == evento_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if evento is None:
+        raise NoEncontrado(f"No existe el evento {evento_id}.")
+    return evento
+
+
 def crear_evento(db: Session, datos: EventoCrear) -> Evento:
     obtener_organizador(db, datos.organizador_id)
     if db.get(Categoria, datos.categoria_id) is None:
@@ -168,7 +186,7 @@ def crear_evento(db: Session, datos: EventoCrear) -> Evento:
 
 
 def actualizar_evento(db: Session, evento_id: int, datos: EventoActualizar) -> Evento:
-    evento = obtener_evento(db, evento_id)
+    evento = bloquear_evento(db, evento_id)
 
     if evento.estado == EstadoEvento.CANCELADO:
         raise ReglaNegocio("No se puede editar un evento cancelado.", codigo="evento_cancelado")
@@ -201,7 +219,7 @@ def publicar_evento(db: Session, evento_id: int) -> Evento:
     Un evento en borrador no acepta inscritos, por eso se exige que tenga los
     datos mínimos antes de publicarse.
     """
-    evento = obtener_evento(db, evento_id)
+    evento = bloquear_evento(db, evento_id)
 
     if evento.estado == EstadoEvento.PUBLICADO:
         raise Conflicto("El evento ya está publicado.", codigo="evento_ya_publicado")
@@ -220,7 +238,7 @@ def publicar_evento(db: Session, evento_id: int) -> Evento:
 
 
 def cancelar_evento(db: Session, evento_id: int) -> Evento:
-    evento = obtener_evento(db, evento_id)
+    evento = bloquear_evento(db, evento_id)
     if evento.estado == EstadoEvento.CANCELADO:
         raise Conflicto("El evento ya está cancelado.", codigo="evento_ya_cancelado")
 
@@ -236,7 +254,7 @@ def cancelar_evento(db: Session, evento_id: int) -> Evento:
 
 
 def eliminar_evento(db: Session, evento_id: int) -> None:
-    evento = obtener_evento(db, evento_id)
+    evento = bloquear_evento(db, evento_id)
     inscritos = contar_inscritos(db, evento_id)
     if inscritos > 0:
         raise Conflicto(
