@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.realtime import notificar_cambio
 from app.models import EstadoPago
 from app.schemas.evento import EventoSalida
 from app.schemas.inscripcion import InscripcionCrear, InscripcionDetalle, InscripcionSalida
@@ -60,6 +61,7 @@ def listar_inscripciones(
 def crear_inscripcion(datos: InscripcionCrear, db: Session = Depends(get_db)):
     """Responde **409** si ya está inscrito o si el aforo está completo."""
     inscripcion = inscripcion_service.crear_inscripcion(db, datos.evento_id, datos.usuario_id)
+    notificar_cambio("inscripcion.creada", "inscripciones", inscripcion.id)
     return _a_detalle(db, inscripcion)
 
 
@@ -81,6 +83,7 @@ def inscripcion_publica(datos: InscripcionPublica, db: Session = Depends(get_db)
         UsuarioCrear(nombre=datos.nombre, email=datos.email, telefono=datos.telefono),
     )
     inscripcion = inscripcion_service.crear_inscripcion(db, datos.evento_id, usuario.id)
+    notificar_cambio("inscripcion.creada", "inscripciones", inscripcion.id)
     return _a_detalle(db, inscripcion)
 
 
@@ -115,4 +118,6 @@ def obtener_por_codigo(codigo: str, db: Session = Depends(get_db)):
 )
 def cancelar_inscripcion(inscripcion_id: int, db: Session = Depends(get_db)):
     """Libera el cupo. Responde **422** si la persona ya fue acreditada."""
-    return inscripcion_service.cancelar_inscripcion(db, inscripcion_id)
+    resultado = inscripcion_service.cancelar_inscripcion(db, inscripcion_id)
+    notificar_cambio("inscripcion.cancelada", "inscripciones", inscripcion_id)
+    return resultado
