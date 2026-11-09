@@ -31,6 +31,7 @@ import MiEntrada from "./pages/MiEntrada";
 import Organizador from "./pages/Organizador";
 
 import { useRecurso } from "./hooks/useRecurso";
+import { useTiempoReal } from "./hooks/useTiempoReal";
 import {
   listarCategorias,
   listarEventos,
@@ -75,6 +76,9 @@ function App() {
   }, [inscripcionId]);
 
   const registrarCambio = useCallback(() => setVersion((v) => v + 1), []);
+  const estadoRealtime = useTiempoReal((evento) => {
+    if (evento?.tipo) registrarCambio();
+  });
 
   async function abrirInscripcion(eventoId) {
     setEventoDetalle(null);
@@ -105,6 +109,9 @@ function App() {
   return (
     <>
       <Navbar vistaActiva={vista} onCambiarVista={setVista} />
+      <div className="container small text-end text-muted" role="status" aria-live="polite">
+        Sincronización: {estadoRealtime === "conectado" ? "en tiempo real" : estadoRealtime === "conectando" ? "conectando…" : "sin conexión; reintentando"}
+      </div>
 
       <main className="container py-4">
         {errorCatalogos && (
