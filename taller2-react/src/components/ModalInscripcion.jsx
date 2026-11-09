@@ -1,112 +1,106 @@
 /* ModalInscripcion — formulario de inscripción.
 
-   El modal no usa el JavaScript de Bootstrap: aparece y desaparece
-   por renderizado condicional desde el padre. Bootstrap se utiliza
-   para estilos y utilidades.
+   La validación es de dos niveles, y es deliberado:
 
-   La validación es propia: cada campo se revisa en el submit y
-   los mensajes de error se guardan en estado. */
+     · En el navegador se revisan los formatos, para dar respuesta
+       inmediata sin ida y vuelta al servidor.
+     · En el backend se revisan otra vez, y además las reglas que
+       sólo él puede conocer: si queda cupo, si esa persona ya
+       estaba inscrita, si el evento está publicado.
 
-import { useEffect, useState } from "react";
-import { formatearFecha } from "../utils/formato";
+   Las reglas de negocio nunca se validan sólo en el cliente: el
+   navegador es manipulable y el aforo cambia mientras el
+   formulario está abierto. */
+
+import { useState } from "react";
 import ClimaEvento from "./ClimaEvento";
+import { formatearFecha, formatearPrecio } from "../utils/formato";
 
 const FORMULARIO_VACIO = { nombre: "", email: "", telefono: "" };
 
 function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
   const [errores, setErrores] = useState({});
-  const [errorInscripcion, setErrorInscripcion] = useState("");
-
-  useEffect(() => {
-    function manejarTecla(eventoTeclado) {
-      if (eventoTeclado.key === "Escape") {
-        onCerrar();
-      }
-    }
-
-    document.addEventListener("keydown", manejarTecla);
-    return () => document.removeEventListener("keydown", manejarTecla);
-  }, [onCerrar]);
+  const [errorServidor, setErrorServidor] = useState(null);
+  const [enviando, setEnviando] = useState(false);
 
   function actualizarCampo(campo, valor) {
     setFormulario({ ...formulario, [campo]: valor });
-
-    if (errores[campo]) {
-      setErrores({ ...errores, [campo]: undefined });
-    }
   }
 
   function validar() {
-    const nuevosErrores = {};
-
+    const nuevos = {};
     if (formulario.nombre.trim().length < 3) {
-      nuevosErrores.nombre = "Ingresa tu nombre completo (mínimo 3 caracteres).";
+      nuevos.nombre = "Ingresa tu nombre completo (mínimo 3 caracteres).";
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formulario.email.trim())) {
-      nuevosErrores.email = "Ingresa un correo electrónico válido.";
+      nuevos.email = "Ingresa un correo electrónico válido.";
     }
-
     if (!/^\d{8,12}$/.test(formulario.telefono.trim())) {
-      nuevosErrores.telefono = "El teléfono debe tener entre 8 y 12 dígitos.";
+      nuevos.telefono = "El teléfono debe tener entre 8 y 12 dígitos.";
     }
-
-    return nuevosErrores;
+    return nuevos;
   }
 
-  function manejarEnvio(e) {
+  async function manejarEnvio(e) {
     e.preventDefault();
+    setErrorServidor(null);
 
-    const nuevosErrores = validar();
-    setErrores(nuevosErrores);
+    const nuevos = validar();
+    setErrores(nuevos);
+    if (Object.keys(nuevos).length > 0) return;
 
-    if (Object.keys(nuevosErrores).length > 0) {
-      return;
+    setEnviando(true);
+    try {
+      await onConfirmar({
+        nombre: formulario.nombre.trim(),
+        email: formulario.email.trim().toLowerCase(),
+        telefono: formulario.telefono.trim(),
+      });
+    } catch (fallo) {
+      // Errores que sólo el backend puede detectar.
+      setErrorServidor(fallo);
+    } finally {
+      setEnviando(false);
     }
-
-    const error = onConfirmar({
-      nombre: formulario.nombre.trim(),
-      email: formulario.email.trim(),
-      telefono: formulario.telefono.trim(),
-    });
-    setErrorInscripcion(error || "");
   }
 
   return (
-    <div
-      className="modal-fondo"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="titulo-modal-inscripcion"
-    >
+    <div className="modal-fondo" role="dialog" aria-modal="true" aria-labelledby="titulo-inscripcion">
       <div className="modal-caja">
         <div className="modal-cabecera">
           <div>
-            <h2 id="titulo-modal-inscripcion" className="h5 mb-1">
+            <h2 id="titulo-inscripcion" className="h5 mb-1">
               Inscripción
             </h2>
             <p className="text-muted small mb-0">
               {evento.nombre} — {formatearFecha(evento.fecha)}
             </p>
           </div>
-          <button
-            type="button"
-            className="btn-close"
-            aria-label="Cerrar inscripción"
-            onClick={onCerrar}
-          ></button>
+          <button type="button" className="btn-close" aria-label="Cerrar" onClick={onCerrar} />
         </div>
 
         <div className="modal-cuerpo">
-          {evento.exterior && (
-            <div className="mb-3">
-              <ClimaEvento lat={evento.lat} lon={evento.lon} fecha={evento.fecha} />
+          <div className="mb-3">
+            <ClimaEvento eventoId={evento.id} />
+          </div>
+
+          {evento.precio > 0 && (
+            <div className="alert alert-light border small">
+              <i className="bi bi-credit-card me-1"></i>
+              Este evento tiene un valor de <strong>{formatearPrecio(evento.precio)}</strong>.
+              Tu entrada quedará pendiente de pago y podrás pagarla desde "Mi entrada".
+            </div>
+          )}
+
+          {errorServidor && (
+            <div className="alert alert-danger" role="alert">
+              <i className="bi bi-exclamation-triangle me-1"></i>
+              {errorServidor.message}
             </div>
           )}
 
           <form onSubmit={manejarEnvio} noValidate>
-            {errorInscripcion && <div className="alert alert-danger" role="alert">{errorInscripcion}</div>}
             <div className="mb-3">
               <label htmlFor="inscripcion-nombre" className="form-label">
                 Nombre completo
@@ -117,16 +111,9 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 className={"form-control" + (errores.nombre ? " is-invalid" : "")}
                 value={formulario.nombre}
                 onChange={(e) => actualizarCampo("nombre", e.target.value)}
-                autoComplete="name"
-                required
-                aria-invalid={Boolean(errores.nombre)}
-                aria-describedby={errores.nombre ? "error-nombre" : undefined}
+                disabled={enviando}
               />
-              {errores.nombre && (
-                <div id="error-nombre" className="invalid-feedback">
-                  {errores.nombre}
-                </div>
-              )}
+              {errores.nombre && <div className="invalid-feedback">{errores.nombre}</div>}
             </div>
 
             <div className="mb-3">
@@ -139,16 +126,9 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 className={"form-control" + (errores.email ? " is-invalid" : "")}
                 value={formulario.email}
                 onChange={(e) => actualizarCampo("email", e.target.value)}
-                autoComplete="email"
-                required
-                aria-invalid={Boolean(errores.email)}
-                aria-describedby={errores.email ? "error-email" : undefined}
+                disabled={enviando}
               />
-              {errores.email && (
-                <div id="error-email" className="invalid-feedback">
-                  {errores.email}
-                </div>
-              )}
+              {errores.email && <div className="invalid-feedback">{errores.email}</div>}
             </div>
 
             <div className="mb-4">
@@ -162,17 +142,9 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 placeholder="912345678"
                 value={formulario.telefono}
                 onChange={(e) => actualizarCampo("telefono", e.target.value)}
-                autoComplete="tel"
-                inputMode="numeric"
-                required
-                aria-invalid={Boolean(errores.telefono)}
-                aria-describedby={errores.telefono ? "error-telefono" : undefined}
+                disabled={enviando}
               />
-              {errores.telefono && (
-                <div id="error-telefono" className="invalid-feedback">
-                  {errores.telefono}
-                </div>
-              )}
+              {errores.telefono && <div className="invalid-feedback">{errores.telefono}</div>}
             </div>
 
             <div className="d-flex justify-content-end gap-2">
@@ -180,11 +152,19 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 type="button"
                 className="btn btn-outline-secondary"
                 onClick={onCerrar}
+                disabled={enviando}
               >
                 Cancelar
               </button>
-              <button type="submit" className="btn btn-primary-brand">
-                Confirmar inscripción
+              <button type="submit" className="btn btn-primary-brand" disabled={enviando}>
+                {enviando ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                    Inscribiendo...
+                  </>
+                ) : (
+                  "Confirmar inscripción"
+                )}
               </button>
             </div>
           </form>

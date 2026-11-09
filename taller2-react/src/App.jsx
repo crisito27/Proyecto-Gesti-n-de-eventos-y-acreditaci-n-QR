@@ -1,193 +1,163 @@
 /* =========================================================
    App.jsx — componente raíz.
 
-   Concentra el estado que más de una pantalla necesita:
-   participantes, inscripciones, la vista activa y el modal.
-   Los datos iniciales de los eventos vienen de un archivo JSON
-   local (no hay backend).
+   Qué cambió respecto del Taller 2
+   --------------------------------
+   Antes esta aplicación era la dueña de los datos: los eventos
+   venían de un JSON incluido en el bundle, las inscripciones
+   vivían en un array del estado de React y se guardaban en
+   localStorage.
 
-   Decisión de modelo: el número de inscritos NO se guarda como
-   un contador aparte. "aforoBase" son las inscripciones previas
-   simuladas, y a eso se le suman las inscripciones hechas en la
-   sesión. Así existe una sola fuente de verdad y los números del
-   listado y del dashboard nunca pueden contradecirse.
+   Ahora la fuente de verdad es la API. App.jsx ya no almacena
+   eventos ni inscripciones: carga los catálogos que varias
+   pantallas comparten (categorías, organizadores, eventos) y
+   coordina la navegación.
+
+   Lo único que queda en localStorage es el **id** de la última
+   inscripción hecha en este navegador. No son datos, es una
+   referencia: sirve para que "Mi entrada" sepa qué pedirle a la
+   API después de recargar la página. En un sistema con cuentas de
+   usuario esto lo reemplazaría la sesión.
    ========================================================= */
 
-import { useEffect, useState } from "react";
-import eventosIniciales from "./data/eventos.json";
-import { generarCodigo } from "./utils/formato";
+import { useCallback, useEffect, useState } from "react";
 
-import DetalleEvento from "./components/DetalleEvento";
-import { validarInscripcion } from "./utils/inscripciones";
 import Navbar from "./components/Navbar";
+import DetalleEvento from "./components/DetalleEvento";
 import ModalInscripcion from "./components/ModalInscripcion";
+import { ErrorCarga } from "./components/EstadoRecurso";
 import Eventos from "./pages/Eventos";
 import MiEntrada from "./pages/MiEntrada";
 import Organizador from "./pages/Organizador";
 
-const CLAVE_ALMACENAMIENTO = "acreditaqr-estado";
+import { useRecurso } from "./hooks/useRecurso";
+import {
+  listarCategorias,
+  listarEventos,
+  listarOrganizadores,
+  obtenerEvento,
+} from "./services/eventosApi";
+import { inscribirse } from "./services/inscripcionesApi";
 
-// Lee el estado guardado en el navegador. Va dentro de try/catch
-// porque localStorage puede fallar o contener datos corruptos.
-function leerEstadoGuardado() {
+const CLAVE_INSCRIPCION = "acreditaqr-inscripcion-id";
+
+function leerInscripcionGuardada() {
   try {
-    const guardado = localStorage.getItem(CLAVE_ALMACENAMIENTO);
-    return guardado ? JSON.parse(guardado) : null;
+    const valor = localStorage.getItem(CLAVE_INSCRIPCION);
+    return valor ? Number(valor) : null;
   } catch {
     return null;
   }
 }
 
 function App() {
-  // Se lee localStorage una sola vez al montar el componente.
-  // useState con función evita repetir JSON.parse en cada render.
-  const [estadoInicial] = useState(leerEstadoGuardado);
-
   const [vista, setVista] = useState("eventos");
-  const [participantes, setParticipantes] = useState(
-    estadoInicial?.participantes ?? []
-  );
-  const [inscripciones, setInscripciones] = useState(
-    estadoInicial?.inscripciones ?? []
-  );
-  const [inscripcionActualId, setInscripcionActualId] = useState(
-    estadoInicial?.inscripcionActualId ?? null
-  );
+  const [version, setVersion] = useState(0);
 
-  // Evento para el que está abierto el modal (null = modal cerrado).
+  const [inscripcionId, setInscripcionId] = useState(leerInscripcionGuardada);
   const [eventoAInscribir, setEventoAInscribir] = useState(null);
   const [eventoDetalle, setEventoDetalle] = useState(null);
 
-  // Persistencia simple en el navegador: cada vez que cambian las
-  // inscripciones o los participantes, se guarda el estado.
+  // Catálogos compartidos por varias pantallas: se cargan una vez.
+  const categorias = useRecurso(listarCategorias, [], { inicial: [] });
+  const organizadores = useRecurso(listarOrganizadores, [], { inicial: [] });
+  const eventos = useRecurso(() => listarEventos(), [version], { inicial: [] });
+
+  // Guarda sólo la referencia a la última inscripción.
   useEffect(() => {
     try {
-      localStorage.setItem(
-        CLAVE_ALMACENAMIENTO,
-        JSON.stringify({ participantes, inscripciones, inscripcionActualId })
-      );
+      if (inscripcionId) localStorage.setItem(CLAVE_INSCRIPCION, String(inscripcionId));
+      else localStorage.removeItem(CLAVE_INSCRIPCION);
     } catch {
-      // Si el navegador bloquea el almacenamiento, la aplicación
-      // sigue funcionando: sólo se pierde al recargar.
+      // Si el navegador bloquea el almacenamiento, la aplicación sigue
+      // funcionando: sólo se pierde la referencia al recargar.
     }
-  }, [participantes, inscripciones, inscripcionActualId]);
+  }, [inscripcionId]);
 
-  // ---- Funciones de consulta (datos derivados) ----
+  const registrarCambio = useCallback(() => setVersion((v) => v + 1), []);
 
-  function buscarEvento(id) {
-    return eventosIniciales.find((evento) => evento.id === id);
-  }
-
-  function buscarParticipante(id) {
-    return participantes.find((persona) => persona.id === id);
-  }
-
-  function contarInscritos(eventoId) {
-    const evento = buscarEvento(eventoId);
-    const nuevas = inscripciones.filter((i) => i.eventoId === eventoId).length;
-    return evento.aforoBase + nuevas;
-  }
-
-  // ---- Acciones ----
-
-  function abrirInscripcion(eventoId) {
+  async function abrirInscripcion(eventoId) {
     setEventoDetalle(null);
-    setEventoAInscribir(buscarEvento(eventoId));
+    // Se vuelve a pedir el evento para tener el cupo al día en el
+    // momento de abrir el formulario.
+    const evento = await obtenerEvento(eventoId);
+    setEventoAInscribir(evento);
   }
 
-  function confirmarInscripcion(datosFormulario) {
-    const error = validarInscripcion(eventoAInscribir, participantes, inscripciones, datosFormulario.email);
-    if (error) return error;
-    const nuevoParticipante = {
-      id: Date.now(),
-      ...datosFormulario,
-      email: datosFormulario.email.trim().toLowerCase(),
-    };
-
-    const nuevaInscripcion = {
-      id: Date.now() + 1,
+  async function confirmarInscripcion(datos) {
+    const inscripcion = await inscribirse({
       eventoId: eventoAInscribir.id,
-      participanteId: nuevoParticipante.id,
-      codigo: generarCodigo(),
-      estado: "inscrito",
-    };
-
-    // Nunca se modifica el array existente: se crea uno nuevo.
-    // Si mutáramos el array, React no detectaría el cambio.
-    setParticipantes((actuales) => [...actuales, nuevoParticipante]);
-    setInscripciones((actuales) => [...actuales, nuevaInscripcion]);
-    setInscripcionActualId(nuevaInscripcion.id);
-
+      ...datos,
+    });
+    setInscripcionId(inscripcion.id);
     setEventoAInscribir(null);
     setVista("mientrada");
+    registrarCambio();
   }
 
-  function confirmarAsistencia(inscripcionId) {
-    setInscripciones((actuales) =>
-      actuales.map((inscripcion) =>
-        inscripcion.id === inscripcionId
-          ? { ...inscripcion, estado: "asistio" }
-          : inscripcion
-      )
-    );
+  async function verDetalle(eventoId) {
+    const evento = await obtenerEvento(eventoId);
+    setEventoDetalle(evento);
   }
 
-  // ---- Datos para la vista "Mi entrada" ----
-
-  const inscripcionActual =
-    inscripciones.find((i) => i.id === inscripcionActualId) ?? null;
+  const errorCatalogos = categorias.error ?? organizadores.error;
 
   return (
     <>
       <Navbar vistaActiva={vista} onCambiarVista={setVista} />
 
       <main className="container py-4">
+        {errorCatalogos && (
+          <ErrorCarga
+            error={errorCatalogos}
+            onReintentar={() => {
+              categorias.recargar();
+              organizadores.recargar();
+            }}
+          />
+        )}
+
         {vista === "eventos" && (
           <Eventos
-            eventos={eventosIniciales}
-            contarInscritos={contarInscritos}
+            categorias={categorias.datos ?? []}
             onInscribirse={abrirInscripcion}
-            onVerDetalle={(id) => setEventoDetalle(buscarEvento(id))}
+            onVerDetalle={verDetalle}
+            recargarToken={version}
           />
         )}
 
         {vista === "mientrada" && (
           <MiEntrada
-            inscripcion={inscripcionActual}
-            evento={inscripcionActual ? buscarEvento(inscripcionActual.eventoId) : null}
-            participante={
-              inscripcionActual
-                ? buscarParticipante(inscripcionActual.participanteId)
-                : null
-            }
+            inscripcionId={inscripcionId}
             onIrAEventos={() => setVista("eventos")}
+            onCambio={registrarCambio}
           />
         )}
 
         {vista === "organizador" && (
           <Organizador
-            eventos={eventosIniciales}
-            inscripciones={inscripciones}
-            contarInscritos={contarInscritos}
-            buscarEvento={buscarEvento}
-            buscarParticipante={buscarParticipante}
-            onConfirmarAsistencia={confirmarAsistencia}
+            categorias={categorias.datos ?? []}
+            organizadores={organizadores.datos ?? []}
+            eventos={eventos.datos ?? []}
+            onCambio={registrarCambio}
           />
         )}
       </main>
 
       <footer className="site-footer py-3">
         <div className="container text-muted small">
-          AcreditaQR — Taller Evaluado 2, Desarrollo Web y Móvil.
+          AcreditaQR — Hito 3, Plataforma Web Full Stack · Desarrollo Web y Móvil.
         </div>
       </footer>
 
-      {/* Renderizado condicional del modal: sólo existe en el DOM
-          cuando hay un evento seleccionado. */}
       {eventoDetalle && (
-        <DetalleEvento evento={eventoDetalle} inscritos={contarInscritos(eventoDetalle.id)}
-          onInscribirse={abrirInscripcion} onCerrar={() => setEventoDetalle(null)} />
+        <DetalleEvento
+          evento={eventoDetalle}
+          onInscribirse={abrirInscripcion}
+          onCerrar={() => setEventoDetalle(null)}
+        />
       )}
+
       {eventoAInscribir && (
         <ModalInscripcion
           evento={eventoAInscribir}

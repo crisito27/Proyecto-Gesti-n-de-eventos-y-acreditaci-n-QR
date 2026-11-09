@@ -1,6 +1,5 @@
-/* Navbar — barra superior. Es un componente "tonto": no tiene
-   estado propio, recibe por props la vista activa y la función
-   que la cambia. El estado vive en App.jsx. */
+/* Navbar — barra superior. Componente sin estado propio: recibe
+   la vista activa y la función que la cambia. */
 
 const VISTAS = [
   { clave: "eventos", etiqueta: "Eventos" },
@@ -24,9 +23,9 @@ function Navbar({ vistaActiva, onCambiarVista }) {
                 <button
                   type="button"
                   className={
-                    "nav-link btn-vista" +
-                    (vistaActiva === vista.clave ? " active" : "")
+                    "nav-link btn-vista" + (vistaActiva === vista.clave ? " active" : "")
                   }
+                  aria-current={vistaActiva === vista.clave ? "page" : undefined}
                   onClick={() => onCambiarVista(vista.clave)}
                 >
                   {vista.etiqueta}

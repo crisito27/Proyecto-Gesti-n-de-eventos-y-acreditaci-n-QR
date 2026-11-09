@@ -1,9 +1,14 @@
-import { useEffect, useRef } from "react";
-import { formatearFecha } from "../utils/formato";
+/* DetalleEvento — ficha ampliada del evento.
 
-export default function DetalleEvento({ evento, inscritos, onInscribirse, onCerrar }) {
+   Usa el elemento nativo <dialog>, que aporta el foco atrapado y
+   el cierre con Escape sin código adicional. */
+
+import { useEffect, useRef } from "react";
+import ClimaEvento from "./ClimaEvento";
+import { formatearFecha, formatearPrecio } from "../utils/formato";
+
+export default function DetalleEvento({ evento, onInscribirse, onCerrar }) {
   const dialogo = useRef(null);
-  const cupos = Math.max(0, evento.aforoMax - inscritos);
 
   useEffect(() => {
     const nodo = dialogo.current;
@@ -12,26 +17,65 @@ export default function DetalleEvento({ evento, inscritos, onInscribirse, onCerr
   }, []);
 
   return (
-    <dialog ref={dialogo} className="detalle-dialogo" aria-labelledby="titulo-detalle"
-      onCancel={(e) => { e.preventDefault(); onCerrar(); }}>
+    <dialog
+      ref={dialogo}
+      className="detalle-dialogo"
+      aria-labelledby="titulo-detalle"
+      onCancel={(e) => {
+        e.preventDefault();
+        onCerrar();
+      }}
+    >
       <div className="modal-cabecera">
-        <h2 id="titulo-detalle" className="h4 mb-0">{evento.nombre}</h2>
-        <button type="button" className="btn-close" aria-label="Cerrar detalle" onClick={onCerrar} />
+        <h2 id="titulo-detalle" className="h4 mb-0">
+          {evento.nombre}
+        </h2>
+        <button
+          type="button"
+          className="btn-close"
+          aria-label="Cerrar detalle"
+          onClick={onCerrar}
+        />
       </div>
+
       <div className="modal-cuerpo">
         <p>{evento.descripcion}</p>
+
         <dl>
-          <dt>Fecha</dt><dd>{formatearFecha(evento.fecha)}</dd>
-          <dt>Lugar</dt><dd>{evento.lugar}</dd>
-          <dt>Organizador</dt><dd>{evento.organizador}</dd>
-          <dt>Categoría</dt><dd>{evento.categoria}</dd>
-          <dt>Ambiente</dt><dd>{evento.exterior ? "Al aire libre" : "Interior"}</dd>
-          <dt>Cupos disponibles</dt><dd>{cupos} de {evento.aforoMax}</dd>
+          <dt>Fecha</dt>
+          <dd>{formatearFecha(evento.fecha)}</dd>
+          <dt>Lugar</dt>
+          <dd>{evento.lugar}</dd>
+          <dt>Organizador</dt>
+          <dd>{evento.organizador}</dd>
+          <dt>Categoría</dt>
+          <dd>{evento.categoria}</dd>
+          <dt>Ambiente</dt>
+          <dd>{evento.exterior ? "Al aire libre" : "Interior"}</dd>
+          <dt>Valor</dt>
+          <dd>{formatearPrecio(evento.precio)}</dd>
+          <dt>Cupos disponibles</dt>
+          <dd>
+            {evento.cupos_disponibles} de {evento.aforo_max}
+          </dd>
         </dl>
+
+        <div className="mb-3">
+          <ClimaEvento eventoId={evento.id} />
+        </div>
+
         <div className="d-flex flex-wrap justify-content-end gap-2">
-          <button type="button" className="btn btn-outline-secondary" onClick={onCerrar}>Volver</button>
-          <button type="button" className="btn btn-primary-brand" disabled={cupos === 0}
-            onClick={() => onInscribirse(evento.id)}>{cupos ? "Inscribirme" : "Agotado"}</button>
+          <button type="button" className="btn btn-outline-secondary" onClick={onCerrar}>
+            Volver
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary-brand"
+            disabled={evento.agotado}
+            onClick={() => onInscribirse(evento.id)}
+          >
+            {evento.agotado ? "Agotado" : "Inscribirme"}
+          </button>
         </div>
       </div>
     </dialog>
