@@ -1,18 +1,13 @@
-/* ListaEventos — recorre la colección y pinta una EventoCard por
-   cada elemento. La "key" es el id del evento: React la usa para
-   saber qué elemento cambió sin volver a crear toda la lista. */
+/* ListaEventos — recorre la colección y pinta una tarjeta por evento.
+   La `key` es el id que asigna PostgreSQL. */
 
 import EventoCard from "./EventoCard";
+import { Vacio } from "./EstadoRecurso";
 
-function ListaEventos({ eventos, contarInscritos, onInscribirse, onVerDetalle }) {
+function ListaEventos({ eventos, onInscribirse, onVerDetalle }) {
   if (eventos.length === 0) {
     return (
-      <div className="empty-state text-center py-5">
-        <i className="bi bi-search display-4"></i>
-        <p className="mt-3 text-muted">
-          No se encontraron eventos con esos filtros.
-        </p>
-      </div>
+      <Vacio icono="search" mensaje="No se encontraron eventos con esos filtros." />
     );
   }
 
@@ -27,9 +22,8 @@ function ListaEventos({ eventos, contarInscritos, onInscribirse, onVerDetalle })
           <div className="col-12 col-lg-6" key={evento.id}>
             <EventoCard
               evento={evento}
-              inscritos={contarInscritos(evento.id)}
               onInscribirse={onInscribirse}
-        onVerDetalle={onVerDetalle}
+              onVerDetalle={onVerDetalle}
             />
           </div>
         ))}

@@ -1,17 +1,25 @@
-/* EventoCard — tarjeta de un evento, con el motivo visual de
-   "talón de entrada". Recibe el evento y cuántas personas hay
-   inscritas (dato derivado, calculado en App.jsx). */
+/* EventoCard — tarjeta de un evento.
 
-import { formatearFecha } from "../utils/formato";
+   Los cupos ya no se calculan en el navegador: vienen calculados
+   por el backend en `cupos_disponibles` y `agotado`. El frontend
+   sólo los muestra. */
 
-function EventoCard({ evento, inscritos, onInscribirse, onVerDetalle }) {
-  const cuposRestantes = evento.aforoMax - inscritos;
-  const agotado = cuposRestantes <= 0;
+import { formatearFecha, formatearPrecio } from "../utils/formato";
+
+function EventoCard({ evento, onInscribirse, onVerDetalle }) {
+  const agotado = evento.agotado;
 
   return (
     <article className={"card-evento" + (agotado ? " agotado" : "")}>
       <div className="card-evento-info">
-        <span className="badge-categoria">{evento.categoria}</span>
+        <div className="d-flex flex-wrap gap-2 align-items-center">
+          <span className="badge-categoria">{evento.categoria}</span>
+          {evento.precio > 0 && (
+            <span className="badge text-bg-light border">
+              {formatearPrecio(evento.precio)}
+            </span>
+          )}
+        </div>
 
         <h3 className="h5 mt-2 mb-1 card-evento-nombre">{evento.nombre}</h3>
         <p className="text-muted small card-evento-desc">{evento.descripcion}</p>
@@ -31,27 +39,29 @@ function EventoCard({ evento, inscritos, onInscribirse, onVerDetalle }) {
           </li>
         </ul>
 
-        {/* Renderizado condicional: la marca sólo aparece si el
-            evento es al aire libre. */}
-        {evento.exterior && (
-          <span className="badge text-bg-light border mt-2">
-            <i className="bi bi-sun me-1"></i>
-            Al aire libre
-          </span>
-        )}
+        <div className="d-flex flex-wrap gap-2 mt-2">
+          {evento.exterior && (
+            <span className="badge text-bg-light border">
+              <i className="bi bi-sun me-1"></i>
+              Al aire libre
+            </span>
+          )}
+          <button
+            type="button"
+            className="btn btn-sm btn-link p-0"
+            onClick={() => onVerDetalle(evento.id)}
+          >
+            Ver detalle
+          </button>
+        </div>
       </div>
 
       <div className="card-evento-stub">
         <div>
-          <strong className="stub-aforo-numero">
-            {agotado ? 0 : cuposRestantes}
-          </strong>
-          <span className="stub-aforo-label">
-            {agotado ? "agotado" : "cupos"}
-          </span>
+          <strong className="stub-aforo-numero">{evento.cupos_disponibles}</strong>
+          <span className="stub-aforo-label">{agotado ? "agotado" : "cupos"}</span>
         </div>
 
-        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => onVerDetalle(evento.id)}>Ver detalle</button>
         <button
           type="button"
           className="btn btn-sm btn-inscribirse"

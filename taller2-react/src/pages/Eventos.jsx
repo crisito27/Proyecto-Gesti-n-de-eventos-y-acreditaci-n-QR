@@ -1,35 +1,38 @@
-/* Eventos — vista pública.
-   Guarda el estado de los filtros y calcula la lista filtrada.
-   El filtrado se hace en el renderizado: no hace falta guardar la
-   lista resultante en estado, porque se deriva de lo que ya hay. */
+/* Eventos — vista pública del catálogo.
+
+   Cambio del Hito 3: el filtrado por texto y categoría ya no se
+   hace sobre un array en memoria, sino que viaja como parámetros
+   de consulta a la API. Sólo el filtro de disponibilidad se
+   resuelve en el cliente, porque opera sobre `cupos_disponibles`,
+   que es un dato ya calculado por el backend en la respuesta. */
 
 import { useState } from "react";
 import FiltrosEventos from "../components/FiltrosEventos";
 import ListaEventos from "../components/ListaEventos";
+import { Recurso } from "../components/EstadoRecurso";
+import { useRecurso } from "../hooks/useRecurso";
+import { listarEventos } from "../services/eventosApi";
 
-const FILTROS_INICIALES = { texto: "", categoria: "", disponibilidad: "" };
+const FILTROS_INICIALES = { texto: "", categoriaId: "", disponibilidad: "" };
 
-function Eventos({ eventos, contarInscritos, onInscribirse, onVerDetalle }) {
+function Eventos({ categorias, onInscribirse, onVerDetalle, recargarToken }) {
   const [filtros, setFiltros] = useState(FILTROS_INICIALES);
 
-  const eventosFiltrados = eventos.filter((evento) => {
-    const texto = filtros.texto.trim().toLowerCase();
+  const { datos, cargando, error, recargar } = useRecurso(
+    () =>
+      listarEventos({
+        texto: filtros.texto.trim() || undefined,
+        categoriaId: filtros.categoriaId || undefined,
+        estado: "publicado", // el público sólo ve eventos publicados
+      }),
+    [filtros.texto, filtros.categoriaId, recargarToken],
+    { inicial: [] },
+  );
 
-    const coincideTexto =
-      !texto ||
-      evento.nombre.toLowerCase().includes(texto) ||
-      evento.lugar.toLowerCase().includes(texto);
-
-    const coincideCategoria =
-      !filtros.categoria || evento.categoria === filtros.categoria;
-
-    const cuposRestantes = evento.aforoMax - contarInscritos(evento.id);
-    const coincideDisponibilidad =
-      !filtros.disponibilidad ||
-      (filtros.disponibilidad === "disponible" && cuposRestantes > 0) ||
-      (filtros.disponibilidad === "agotado" && cuposRestantes <= 0);
-
-    return coincideTexto && coincideCategoria && coincideDisponibilidad;
+  const visibles = (datos ?? []).filter((evento) => {
+    if (filtros.disponibilidad === "disponible") return !evento.agotado;
+    if (filtros.disponibilidad === "agotado") return evento.agotado;
+    return true;
   });
 
   return (
@@ -43,17 +46,19 @@ function Eventos({ eventos, contarInscritos, onInscribirse, onVerDetalle }) {
 
         <FiltrosEventos
           filtros={filtros}
+          categorias={categorias}
           onCambiarFiltros={setFiltros}
           onLimpiar={() => setFiltros(FILTROS_INICIALES)}
         />
       </div>
 
-      <ListaEventos
-        eventos={eventosFiltrados}
-        contarInscritos={contarInscritos}
-        onInscribirse={onInscribirse}
-        onVerDetalle={onVerDetalle}
-      />
+      <Recurso cargando={cargando} error={error} onReintentar={recargar}>
+        <ListaEventos
+          eventos={visibles}
+          onInscribirse={onInscribirse}
+          onVerDetalle={onVerDetalle}
+        />
+      </Recurso>
     </section>
   );
 }

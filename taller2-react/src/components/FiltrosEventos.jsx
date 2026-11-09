@@ -1,14 +1,20 @@
-/* FiltrosEventos — formulario de búsqueda y filtros.
-   Todos los campos son "controlados": su valor viene de props y
-   cada cambio avisa al padre. React es la única fuente de verdad. */
+/* FiltrosEventos — buscador y filtros.
 
-function FiltrosEventos({ filtros, onCambiarFiltros, onLimpiar }) {
+   Las categorías ya no están escritas a mano: se cargan desde la
+   API, de modo que si el organizador crea una nueva, aparece aquí
+   sin tocar el código. */
+
+function FiltrosEventos({ filtros, categorias, onCambiarFiltros, onLimpiar }) {
   function actualizar(campo, valor) {
     onCambiarFiltros({ ...filtros, [campo]: valor });
   }
 
   return (
-    <form className="row g-2 filtros-form" role="search" onSubmit={(e) => e.preventDefault()}>
+    <form
+      className="row g-2 filtros-form"
+      role="search"
+      onSubmit={(e) => e.preventDefault()}
+    >
       <div className="col-12 col-md-5">
         <label htmlFor="buscar-evento" className="form-label visually-hidden">
           Buscar evento
@@ -30,14 +36,15 @@ function FiltrosEventos({ filtros, onCambiarFiltros, onLimpiar }) {
         <select
           id="filtro-categoria"
           className="form-select"
-          value={filtros.categoria}
-          onChange={(e) => actualizar("categoria", e.target.value)}
+          value={filtros.categoriaId}
+          onChange={(e) => actualizar("categoriaId", e.target.value)}
         >
           <option value="">Todas las categorías</option>
-          <option value="Seminario">Seminario</option>
-          <option value="Capacitación">Capacitación</option>
-          <option value="Feria">Feria</option>
-          <option value="Taller">Taller</option>
+          {categorias.map((categoria) => (
+            <option key={categoria.id} value={categoria.id}>
+              {categoria.nombre}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -63,6 +70,7 @@ function FiltrosEventos({ filtros, onCambiarFiltros, onLimpiar }) {
           className="btn btn-outline-secondary"
           onClick={onLimpiar}
           title="Limpiar filtros"
+          aria-label="Limpiar filtros"
         >
           <i className="bi bi-x-lg"></i>
         </button>
