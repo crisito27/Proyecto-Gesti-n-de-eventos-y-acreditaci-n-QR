@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.realtime import notificar_cambio
 from app.models import EstadoEvento
 from app.schemas.comunes import ClimaSalida
 from app.schemas.evento import (
@@ -63,6 +64,7 @@ def listar_eventos(
 def crear_evento(datos: EventoCrear, db: Session = Depends(get_db)):
     """Crea un evento en estado **borrador**. No acepta inscripciones hasta publicarse."""
     evento = evento_service.crear_evento(db, datos)
+    notificar_cambio("evento.creado", "eventos", evento.id)
     return evento_service.a_salida(db, evento)
 
 
@@ -78,6 +80,7 @@ def actualizar_evento(evento_id: int, datos: EventoActualizar, db: Session = Dep
     Responde **409** si se intenta dejar el aforo por debajo de los inscritos.
     """
     evento = evento_service.actualizar_evento(db, evento_id, datos)
+    notificar_cambio("evento.actualizado", "eventos", evento_id)
     return evento_service.a_salida(db, evento)
 
 
@@ -86,7 +89,9 @@ def actualizar_evento(evento_id: int, datos: EventoActualizar, db: Session = Dep
 )
 def publicar_evento(evento_id: int, db: Session = Depends(get_db)):
     """Habilita las inscripciones. Exige que el evento tenga descripción."""
-    return evento_service.a_salida(db, evento_service.publicar_evento(db, evento_id))
+    evento = evento_service.publicar_evento(db, evento_id)
+    notificar_cambio("evento.publicado", "eventos", evento_id)
+    return evento_service.a_salida(db, evento)
 
 
 @router.post(
@@ -94,7 +99,9 @@ def publicar_evento(evento_id: int, db: Session = Depends(get_db)):
 )
 def cancelar_evento(evento_id: int, db: Session = Depends(get_db)):
     """Cancela el evento y, con él, todas sus inscripciones vigentes."""
-    return evento_service.a_salida(db, evento_service.cancelar_evento(db, evento_id))
+    evento = evento_service.cancelar_evento(db, evento_id)
+    notificar_cambio("evento.cancelado", "eventos", evento_id)
+    return evento_service.a_salida(db, evento)
 
 
 @router.delete(
@@ -105,6 +112,7 @@ def cancelar_evento(evento_id: int, db: Session = Depends(get_db)):
 def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
     """Sólo se permite si el evento no tiene inscritos. Si los tiene, responde **409**."""
     evento_service.eliminar_evento(db, evento_id)
+    notificar_cambio("evento.eliminado", "eventos", evento_id)
 
 
 # --------------------------------------------------------------------------
