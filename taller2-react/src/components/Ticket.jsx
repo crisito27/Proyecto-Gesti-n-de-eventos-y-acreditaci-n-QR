@@ -1,21 +1,24 @@
 /* Ticket — entrada digital con su código QR.
-   El QR se genera en el navegador con qrcode.react, que recibe
-   el código de la inscripción y devuelve un SVG. */
+
+   El código ya no se genera aquí: viene de la API, creado por el
+   backend. El QR se dibuja en el navegador a partir de ese código. */
 
 import { QRCodeSVG } from "qrcode.react";
-import { formatearFecha } from "../utils/formato";
+import {
+  CLASE_ESTADO_INSCRIPCION,
+  ETIQUETA_ESTADO_INSCRIPCION,
+  formatearFecha,
+} from "../utils/formato";
 
-function Ticket({ inscripcion, evento, participante }) {
-  const asistio = inscripcion.estado === "asistio";
+function Ticket({ inscripcion }) {
+  const { evento, usuario, estado, codigo } = inscripcion;
 
   return (
     <article className="ticket">
       <div className="ticket-info">
         <p className="ticket-eyebrow">ENTRADA DIGITAL</p>
         <h2 className="h5 mb-1">{evento.nombre}</h2>
-        <p className="ticket-participante small">
-          Inscrito por: {participante.nombre}
-        </p>
+        <p className="ticket-participante small">Inscrito por: {usuario.nombre}</p>
 
         <ul className="ticket-meta">
           <li>
@@ -28,26 +31,20 @@ function Ticket({ inscripcion, evento, participante }) {
           </li>
           <li>
             <i className="bi bi-envelope"></i>
-            {participante.email}
+            {usuario.email}
           </li>
         </ul>
 
-        {/* Renderizado condicional según el estado de la inscripción */}
-        <span
-          className={
-            "badge ticket-estado " +
-            (asistio ? "text-bg-success" : "text-bg-warning")
-          }
-        >
-          {asistio ? "Asistencia registrada" : "Inscrito — pendiente de check-in"}
+        <span className={"badge ticket-estado " + (CLASE_ESTADO_INSCRIPCION[estado] ?? "text-bg-secondary")}>
+          {ETIQUETA_ESTADO_INSCRIPCION[estado] ?? estado}
         </span>
       </div>
 
       <div className="ticket-stub">
         <div className="ticket-qr">
-          <QRCodeSVG value={inscripcion.codigo} size={120} />
+          <QRCodeSVG value={codigo} size={120} />
         </div>
-        <p className="ticket-codigo mb-0">{inscripcion.codigo}</p>
+        <p className="ticket-codigo mb-0">{codigo}</p>
       </div>
     </article>
   );
