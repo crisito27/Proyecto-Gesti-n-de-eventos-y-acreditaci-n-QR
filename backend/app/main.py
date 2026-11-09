@@ -19,7 +19,7 @@ from app.core.config import settings
 from app.core.database import Base, engine
 from app.core.errores import ErrorDominio
 from app.core.mongo import crear_indices
-from app.routers import acreditaciones, eventos, indicadores, inscripciones, pagos, usuarios
+from app.routers import acreditaciones, eventos, indicadores, inscripciones, pagos, realtime, usuarios
 
 logger = logging.getLogger("acreditaqr")
 
@@ -129,3 +129,4 @@ app.include_router(inscripciones.router, prefix=PREFIJO)
 app.include_router(pagos.router, prefix=PREFIJO)
 app.include_router(acreditaciones.router, prefix=PREFIJO)
 app.include_router(indicadores.router, prefix=PREFIJO)
+app.include_router(realtime.router)
