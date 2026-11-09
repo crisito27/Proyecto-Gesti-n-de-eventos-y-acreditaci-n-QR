@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.realtime import notificar_cambio
 from app.schemas.pago import ComprobanteSalida, PagoCrear, PagoSalida
 from app.services import pago_service
 
@@ -28,7 +29,9 @@ def registrar_pago(datos: PagoCrear, db: Session = Depends(get_db)):
     comprobante con número correlativo. Responde **409** si la inscripción ya
     tenía un pago registrado y **422** si está cancelada.
     """
-    return pago_service.registrar_pago(db, datos.inscripcion_id, datos.metodo)
+    pago = pago_service.registrar_pago(db, datos.inscripcion_id, datos.metodo)
+    notificar_cambio("pago.registrado", "pagos", pago.id)
+    return pago
 
 
 @router.get("/pagos/{pago_id}", response_model=PagoSalida, summary="Obtener un pago")
