@@ -408,7 +408,7 @@ borrador y sin descripción, para poder demostrar la validación al publicar.
 docker compose exec backend python -m pytest tests/ -v
 ```
 
-16 pruebas automatizadas sobre la API, ejecutadas contra PostgreSQL real y MongoDB simulado para los casos que no requieren el servidor:
+La suite contiene 16 pruebas automatizadas sobre la API. En GitHub Actions se ejecutan con PostgreSQL y MongoDB como servicios, usando MongoDB simulado en las pruebas unitarias de bitácora:
 
 | Prueba | Qué verifica |
 |---|---|
@@ -429,9 +429,7 @@ docker compose exec backend python -m pytest tests/ -v
 | `test_indicadores_reflejan_las_inscripciones` | Consultas agregadas |
 | `test_websocket_notifica_cambios_reales_del_backend` | Publicación de cambios REST a clientes WebSocket |
 
-El frontend se verificó manualmente recorriendo el flujo completo en el
-navegador, incluyendo los estados de carga, error y vacío, y el comportamiento
-responsive.
+La suite automatizada del frontend se ejecuta en GitHub Actions mediante `npm ci`, `npm run lint` y `npm run build`. La revisión visual en navegador, el recorrido completo con clics y las capturas responsive siguen siendo una comprobación manual del equipo; no se consideran aprobados sólo por existir el código.
 
 ---
 
