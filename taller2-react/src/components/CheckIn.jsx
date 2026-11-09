@@ -9,7 +9,7 @@
    `resultado`: desde el punto de vista del organizador, un código
    rechazado no es un error del sistema sino información operativa. */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { acreditar } from "../services/organizadorApi";
 import { formatearFechaHora } from "../utils/formato";
 
@@ -28,6 +28,88 @@ function CheckIn({ onAcreditado }) {
   const [resultado, setResultado] = useState(null);
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
+  const [camaraActiva, setCamaraActiva] = useState(false);
+  const [errorCamara, setErrorCamara] = useState(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
+  useEffect(() => {
+    if (!camaraActiva) return undefined;
+
+    let cancelado = false;
+    let frame;
+    let detector;
+
+    async function iniciarEscaner() {
+      if (!("BarcodeDetector" in window)) {
+        setErrorCamara(
+          "Este navegador no permite escanear QR automáticamente. Puedes ingresar el código manualmente.",
+        );
+        setCamaraActiva(false);
+        return;
+      }
+
+      try {
+        const formatos = await window.BarcodeDetector.getSupportedFormats();
+        if (!formatos.includes("qr_code")) {
+          throw new Error("El navegador no admite lectura de códigos QR.");
+        }
+
+        detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+        const flujo = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+
+        if (cancelado) {
+          flujo.getTracks().forEach((pista) => pista.stop());
+          return;
+        }
+
+        streamRef.current = flujo;
+        if (!videoRef.current) return;
+        videoRef.current.srcObject = flujo;
+        await videoRef.current.play();
+
+        const leerFotograma = async () => {
+          if (cancelado || !videoRef.current) return;
+          if (videoRef.current.readyState >= 2) {
+            try {
+              const codigos = await detector.detect(videoRef.current);
+              const codigoLeido = codigos.find((item) => item.rawValue)?.rawValue;
+              if (codigoLeido) {
+                setCodigo(codigoLeido);
+                setErrorCamara(null);
+                setCamaraActiva(false);
+                return;
+              }
+            } catch {
+              setErrorCamara("No se pudo leer el QR. Ajusta la cámara e inténtalo nuevamente.");
+            }
+          }
+          if (!cancelado) frame = window.requestAnimationFrame(leerFotograma);
+        };
+
+        frame = window.requestAnimationFrame(leerFotograma);
+      } catch (fallo) {
+        const mensaje =
+          fallo.name === "NotAllowedError"
+            ? "Debes permitir el acceso a la cámara para escanear."
+            : fallo.message || "No se pudo iniciar la cámara.";
+        setErrorCamara(mensaje);
+        setCamaraActiva(false);
+      }
+    }
+
+    iniciarEscaner();
+
+    return () => {
+      cancelado = true;
+      if (frame) window.cancelAnimationFrame(frame);
+      streamRef.current?.getTracks().forEach((pista) => pista.stop());
+      streamRef.current = null;
+    };
+  }, [camaraActiva]);
 
   async function buscar() {
     const texto = codigo.trim();
@@ -62,6 +144,41 @@ function CheckIn({ onAcreditado }) {
       <p className="text-muted small">
         Escribe o escanea el código de la entrada para registrar la asistencia.
       </p>
+
+      <div className="mb-3">
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm"
+          onClick={() => {
+            setErrorCamara(null);
+            setCamaraActiva((activa) => !activa);
+          }}
+          disabled={enviando}
+        >
+          <i className="bi bi-qr-code-scan me-1"></i>
+          {camaraActiva ? "Cerrar cámara" : "Escanear código QR"}
+        </button>
+        {camaraActiva && (
+          <div className="mt-2" style={{ maxWidth: "420px" }}>
+            <video
+              ref={videoRef}
+              className="w-100 rounded"
+              autoPlay
+              muted
+              playsInline
+              aria-label="Vista de la cámara para escanear el código QR"
+            />
+            <p className="small text-muted mb-0">
+              Enfoca el código QR. Al detectarlo, se copiará al campo para que confirmes la acreditación.
+            </p>
+          </div>
+        )}
+        {errorCamara && (
+          <p className="small text-warning mt-2 mb-0" role="status">
+            {errorCamara}
+          </p>
+        )}
+      </div>
 
       <div className="row g-2 mb-3">
         <div className="col-12 col-sm-8">
