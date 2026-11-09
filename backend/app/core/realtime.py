@@ -17,6 +17,11 @@ class GestorRealtime:
     def __init__(self) -> None:
         self._clientes: set[WebSocket] = set()
         self._lock = asyncio.Lock()
+        self._loop: asyncio.AbstractEventLoop | None = None
+
+    def configurar_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        """Guarda el loop principal para publicar desde endpoints síncronos."""
+        self._loop = loop
 
     async def conectar(self, websocket: WebSocket) -> None:
         await websocket.accept()
@@ -54,8 +59,10 @@ gestor_realtime = GestorRealtime()
 
 def notificar_cambio(tipo: str, recurso: str, recurso_id: int | None = None) -> None:
     """Punto de entrada síncrono para endpoints FastAPI síncronos."""
-    try:
-        loop = asyncio.get_running_loop()
-        loop.create_task(gestor_realtime.publicar(tipo, recurso, recurso_id))
-    except RuntimeError:
-        logger.warning("No hay event loop activo; se omitió notificación realtime")
+    loop = gestor_realtime._loop
+    if loop is None or loop.is_closed():
+        logger.warning("El gestor realtime no tiene un event loop activo")
+        return
+    asyncio.run_coroutine_threadsafe(
+        gestor_realtime.publicar(tipo, recurso, recurso_id), loop
+    )
