@@ -1,0 +1,100 @@
+# Levanta la plataforma completa:
+#
+#   docker compose up --build
+#
+# Servicios y puertos
+#   postgres   5432   base relacional
+#   mongo      27017  base documental
+#   backend    8000   API REST  → Swagger en http://localhost:8000/docs
+#   frontend   5173   aplicación React
+#
+# Las credenciales salen del archivo .env, que no se versiona.
+# Copia .env.example a .env antes de levantar.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: acreditaqr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT_HOST:-5432}:5432"
+    volumes:
+      - datos_postgres:/var/lib/postgresql/data
+    healthcheck:
+      # El backend espera a que PostgreSQL acepte conexiones de verdad,
+      # no sólo a que el contenedor exista.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    container_name: acreditaqr-mongo
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT_HOST:-27017}:27017"
+    volumes:
+      - datos_mongo:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: acreditaqr-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      # Dentro de la red de Compose los servicios se alcanzan por su nombre,
+      # no por localhost.
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB: ${MONGO_DB}
+      CORS_ORIGENES: ${CORS_ORIGENES}
+      DEBUG: ${DEBUG:-false}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/salud').status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  frontend:
+    image: node:22-alpine
+    container_name: acreditaqr-frontend
+    working_dir: /app
+    depends_on:
+      - backend
+    environment:
+      # El navegador del usuario llama a la API desde fuera de Docker,
+      # por eso aquí sí corresponde localhost.
+      VITE_API_URL: http://localhost:${BACKEND_PORT:-8000}/api
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./taller2-react:/app
+      # Volumen anónimo: evita que node_modules del contenedor pise al del
+      # host, que puede tener binarios de otro sistema operativo.
+      - /app/node_modules
+
+volumes:
+  datos_postgres:
+  datos_mongo:
