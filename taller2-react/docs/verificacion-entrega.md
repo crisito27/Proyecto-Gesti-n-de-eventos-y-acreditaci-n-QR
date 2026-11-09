@@ -16,7 +16,7 @@ Revisión técnica del repositorio realizada el 9 de noviembre de 2026. Esta rev
 | Revisión visual completa y responsive | Pendiente de ejecución por el equipo |
 | Flujo completo con clics en navegador | Pendiente de ejecución por el equipo |
 
-**Ejecución automatizada confirmada:** workflow `Validación continua`, run `42704118936`, commit `6043bdb934a8fe0c477f289738669a801485dd25`. Los trabajos backend y frontend finalizaron con `success`. Esta ejecución es anterior a la incorporación del escáner de cámara (`e42a604`); por eso no acredita todavía el lint/build del último commit.
+**Ejecución automatizada confirmada:** workflow `Validación continua`, run `42704528636`, commit `2c84dd80441c91cd18ef7bf73f1fe5533a2b653f`. Los trabajos backend y frontend finalizaron con `success`: backend instaló dependencias, cargó el seed y ejecutó las 16 pruebas; frontend ejecutó `npm ci`, ESLint y build de producción. Esta ejecución incluye el escáner QR (`e42a604`) y la documentación actualizada.
 
 ## Cambios técnicos incluidos en el cierre
 
