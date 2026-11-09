@@ -472,3 +472,62 @@ El detalle completo está en [`docs/uso-ia.md`](docs/uso-ia.md).
 El trabajo se organiza con Git Flow: `master` como rama estable, `develop` como
 rama de integración y ramas `feature/` por funcionalidad, integradas mediante
 Pull Request.
+
+---
+
+## 10. Actualizaciones en tiempo real
+
+El backend expone el canal **WebSocket** `ws://localhost:8000/ws` (en producción,
+usar `wss://`). Cuando se crea, modifica, publica, cancela o elimina un evento,
+se registra una inscripción, se cancela una inscripción, se registra un pago
+o se procesa un intento de acreditación, FastAPI publica un mensaje JSON a los
+clientes conectados.
+
+Ejemplo de mensaje:
+
+```json
+{
+  "tipo": "inscripcion.creada",
+  "recurso": "inscripciones",
+  "recurso_id": 42
+}
+```
+
+React se conecta mediante el hook `useTiempoReal`. Al recibir una notificación,
+actualiza el token de recarga y vuelve a consultar la API REST; el WebSocket
+transporta avisos de cambios, no reemplaza a PostgreSQL ni MongoDB como fuentes
+de verdad. El hook muestra el estado de conexión y reintenta automáticamente
+con espera incremental cuando se pierde la conexión.
+
+**Alcance técnico:** el gestor de conexiones actual vive en memoria y está
+pensado para una instancia de FastAPI (como la ejecución de Docker Compose de
+este proyecto). Si se despliegan varios workers o réplicas, se debe incorporar
+un bus compartido como Redis Pub/Sub para propagar eventos entre procesos.
+Los mensajes no contienen datos personales; el frontend vuelve a consultar
+los recursos autorizados mediante REST.
+
+## 11. Ejecución y validación
+
+1. Copiar `.env.example` a `.env` y completar las variables locales.
+2. Ejecutar `docker compose up --build`.
+3. Comprobar `http://localhost:8000/salud` y abrir `http://localhost:8000/docs`.
+4. Abrir la aplicación en `http://localhost:5173` en dos ventanas o navegadores.
+5. Crear/publicar un evento o realizar una inscripción desde una ventana y
+   comprobar que la otra vuelve a consultar los datos al recibir el aviso.
+6. Registrar un pago o intentar acreditar una entrada y verificar que la
+   bitácora MongoDB y los indicadores reflejen el resultado.
+
+Para ejecutar las pruebas automatizadas del backend desde la carpeta
+`backend` con el entorno virtual activo: `pytest -q`. La ejecución de esta
+suite y la comprobación de los flujos en Docker deben registrarse como evidencia
+del equipo antes de la entrega; la presencia de los archivos de prueba por sí
+sola no demuestra que hayan pasado.
+
+## 12. Uso de herramientas de IA
+
+Si se utilizó ChatGPT u otra herramienta de IA durante el desarrollo, declararlo
+en la entrega con: herramienta y versión disponible, objetivo, prompts
+principales, archivos o decisiones en que ayudó, cambios revisados por el equipo
+y pruebas realizadas por los integrantes. La IA no sustituye la validación:
+cada integrante debe poder explicar el flujo React → API REST/WebSocket →
+servicios → PostgreSQL/MongoDB y las limitaciones descritas en esta sección.
