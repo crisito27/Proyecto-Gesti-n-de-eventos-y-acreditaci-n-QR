@@ -5,6 +5,7 @@ from pymongo.collection import Collection
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.realtime import notificar_cambio
 from app.core.mongo import get_registros
 from app.schemas.acreditacion import (
     AcreditacionCrear,
@@ -37,7 +38,9 @@ def acreditar(
     Todo intento, exitoso o no, se guarda en la colección
     `registros_acceso` de MongoDB.
     """
-    return acreditacion_service.acreditar(db, registros, datos.codigo, datos.puerta)
+    resultado = acreditacion_service.acreditar(db, registros, datos.codigo, datos.puerta)
+    notificar_cambio("acreditacion.registrada", "acreditaciones")
+    return resultado
 
 
 @router.get(
