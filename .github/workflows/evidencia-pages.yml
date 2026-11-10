@@ -1,0 +1,54 @@
+name: Evidencia de navegador - Pages (modo demo)
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  e2e-demo-pages:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: taller2-react
+    env:
+      VITE_DEMO_MODE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: taller2-react/package-lock.json
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Preparar Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Compilar demo de Pages
+        run: npm run build
+      - name: Iniciar servidor local de preview
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/acreditaqr-preview.log 2>&1 &
+          for intento in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/acreditaqr-preview.log
+          exit 1
+      - name: Comprobar flujos visuales y capturar pantallas reales
+        run: node scripts/e2e-demo.mjs
+      - name: Adjuntar capturas de navegador
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-demo-acreditaqr
+          path: taller2-react/evidencias-navegador/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Logs de preview si falla
+        if: failure()
+        run: cat /tmp/acreditaqr-preview.log
