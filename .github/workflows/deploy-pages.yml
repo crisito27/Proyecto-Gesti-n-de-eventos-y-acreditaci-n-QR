@@ -42,10 +42,18 @@ jobs:
           VITE_DEMO_MODE: ${{ vars.VITE_API_URL == '' && 'true' || 'false' }}
         run: npm run build
 
-      - name: Deploy dist to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: master
-          publish_dir: ./taller2-react/dist
-          keep_files: true
+      - name: Publicar React en la raíz de master (GitHub Pages)
+        run: |
+          # Se actualizan únicamente los archivos públicos; el código fuente
+          # del backend, los tests y los documentos se conservan.
+          touch taller2-react/dist/.nojekyll
+          cp -R taller2-react/dist/. .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html favicon.svg icons.svg .nojekyll assets
+          if git diff --cached --quiet; then
+            echo "El sitio está actualizado."
+          else
+            git commit -m "chore(pages): publica React compilado [skip ci]"
+            git push origin HEAD:master
+          fi
