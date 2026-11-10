@@ -1,9 +1,12 @@
-name: Deploy React app to GitHub Pages
+name: Deploy React app to GitHub Pages (source master)
 
 on:
   push:
     branches:
       - master
+    paths-ignore:
+      - 'assets/**'
+      - 'index.html'
   workflow_dispatch:
 
 jobs:
@@ -43,4 +46,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: master
           publish_dir: ./taller2-react/dist
+          keep_files: true
