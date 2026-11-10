@@ -67,6 +67,8 @@ services:
       MONGO_DB: ${MONGO_DB}
       CORS_ORIGENES: ${CORS_ORIGENES}
       DEBUG: ${DEBUG:-false}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_DURACION_HORAS: ${AUTH_DURACION_HORAS:-8}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     healthcheck:
