@@ -49,6 +49,7 @@ try {
 
   await pagina.getByRole("button",{name:"Pagar y emitir comprobante"}).click();
   await pagina.getByText("COMPROBANTE DE PAGO").waitFor();
+  await pagina.locator(".ticket-codigo").waitFor();
   await capturar("04-comprobante-pago-simulado-postgresql");
 
   await pagina.getByRole("button",{name:"Organizador"}).click();
@@ -63,12 +64,12 @@ try {
   await pagina.getByRole("button",{name:"Acreditación"}).click();
   await pagina.locator("#codigo-acreditacion").fill(codigo);
   await pagina.getByRole("button",{name:"Acreditar",exact:true}).click();
-  await pagina.getByText(/acreditad/i).first().waitFor();
+  await pagina.getByText(/Asistencia de .* registrada correctamente/i).waitFor();
   await capturar("07-acreditacion-registrada");
 
   await pagina.locator("#codigo-acreditacion").fill(codigo);
   await pagina.getByRole("button",{name:"Acreditar",exact:true}).click();
-  await pagina.getByText(/ya (fue |está )?acreditad|duplicad/i).first().waitFor();
+  await pagina.getByText(/ya registró su asistencia a este evento/i).waitFor();
   await capturar("08-intento-duplicado");
 
   await pagina.getByRole("button",{name:"Dashboard"}).click();
