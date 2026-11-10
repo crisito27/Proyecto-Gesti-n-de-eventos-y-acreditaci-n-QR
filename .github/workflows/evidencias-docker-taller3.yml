@@ -35,6 +35,8 @@ jobs:
           done
           docker compose logs --tail=80 frontend
           exit 1
+      - name: Restablecer permisos después del volumen Docker
+        run: sudo chown -R "$(id -u):$(id -g)" taller2-react
       - name: Preparar Playwright Chromium
         working-directory: taller2-react
         run: |
