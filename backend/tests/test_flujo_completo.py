@@ -13,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.mongo import get_registros
+from app.core.auth import requerir_organizador
 from app.main import app
 
 
@@ -26,6 +27,7 @@ def registros():
 @pytest.fixture()
 def cliente(registros):
     app.dependency_overrides[get_registros] = lambda: registros
+    app.dependency_overrides[requerir_organizador] = lambda: None
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
@@ -110,14 +112,15 @@ def test_flujo_completo_inscripcion_pago_y_acreditacion(cliente, evento_pagado, 
 
     # 3. Pago simulado -> emite comprobante y confirma la inscripción.
     pago = cliente.post(
-        "/api/pagos", json={"inscripcion_id": datos["id"], "metodo": "tarjeta"}
+        "/api/pagos", json={"inscripcion_id": datos["id"], "metodo": "tarjeta"},
+        headers={"X-Codigo-Entrada": codigo}
     )
     assert pago.status_code == 201, pago.text
     pago_datos = pago.json()
     assert pago_datos["estado"] == "pagado"
     assert pago_datos["numero_comprobante"].startswith("CMP-")
 
-    comprobante = cliente.get(f"/api/pagos/{pago_datos['id']}/comprobante").json()
+    comprobante = cliente.get(f"/api/pagos/{pago_datos['id']}/comprobante", headers={"X-Codigo-Entrada": codigo}).json()
     assert comprobante["codigo_acreditacion"] == codigo
     assert comprobante["asistente"] == "Ana Pérez"
 
@@ -127,7 +130,7 @@ def test_flujo_completo_inscripcion_pago_y_acreditacion(cliente, evento_pagado, 
     assert ok["asistente"] == "Ana Pérez"
 
     # 5. Persistido en PostgreSQL y consultable después.
-    recuperada = cliente.get(f"/api/inscripciones/{datos['id']}").json()
+    recuperada = cliente.get(f"/api/inscripciones/{datos['id']}", headers={"X-Codigo-Entrada": codigo}).json()
     assert recuperada["estado"] == "acreditada"
     assert recuperada["acreditada_en"] is not None
 
@@ -169,7 +172,7 @@ def test_cancelar_libera_el_cupo(cliente, evento_pagado):
 
     assert _inscribir(cliente, evento_id, "Tres", "libera3@ejemplo.cl").status_code == 409
 
-    cancelada = cliente.post(f"/api/inscripciones/{primera['id']}/cancelar")
+    cancelada = cliente.post(f"/api/inscripciones/{primera['id']}/cancelar", headers={"X-Codigo-Entrada": primera["codigo"]})
     assert cancelada.status_code == 200
     assert cancelada.json()["estado"] == "cancelada"
 
@@ -246,7 +249,7 @@ def test_codigo_invalido_queda_registrado_en_mongo(cliente, registros):
 def test_resumen_participacion_agrega_en_mongo(cliente, evento_pagado, registros):
     evento_id = evento_pagado["id"]
     inscripcion = _inscribir(cliente, evento_id, "Eva", "eva.resumen@ejemplo.cl").json()
-    cliente.post("/api/pagos", json={"inscripcion_id": inscripcion["id"]})
+    cliente.post("/api/pagos", json={"inscripcion_id": inscripcion["id"]}, headers={"X-Codigo-Entrada": inscripcion["codigo"]})
 
     cliente.post("/api/acreditaciones", json={"codigo": inscripcion["codigo"]})
     cliente.post("/api/acreditaciones", json={"codigo": inscripcion["codigo"]})
@@ -280,7 +283,7 @@ def test_recurso_inexistente_devuelve_404(cliente):
 def test_indicadores_reflejan_las_inscripciones(cliente, evento_pagado):
     evento_id = evento_pagado["id"]
     inscripcion = _inscribir(cliente, evento_id, "Fran", "fran.ind@ejemplo.cl").json()
-    cliente.post("/api/pagos", json={"inscripcion_id": inscripcion["id"]})
+    cliente.post("/api/pagos", json={"inscripcion_id": inscripcion["id"]}, headers={"X-Codigo-Entrada": inscripcion["codigo"]})
 
     indicadores = cliente.get("/api/indicadores").json()
     fila = next(e for e in indicadores["por_evento"] if e["evento_id"] == evento_id)
@@ -370,3 +373,64 @@ def test_pagos_simultaneos_reciben_comprobantes_unicos(cliente, evento_pagado):
 
     assert comprobantes[0] != comprobantes[1]
     assert all(numero.startswith("CMP-") for numero in comprobantes)
+
+
+def test_entrada_privada_exige_codigo(cliente, evento_pagado):
+    inscrita = _inscribir(
+        cliente, evento_pagado["id"], "Persona Privada", "privada@example.cl"
+    ).json()
+    ruta = f"/api/inscripciones/{inscrita['id']}"
+    assert cliente.get(ruta).status_code == 403
+    assert cliente.get(ruta, headers={"X-Codigo-Entrada": "inventado"}).status_code == 403
+    assert cliente.get(ruta, headers={"X-Codigo-Entrada": inscrita["codigo"]}).status_code == 200
+    assert cliente.post(
+        "/api/pagos", json={"inscripcion_id": inscrita["id"]}
+    ).status_code == 403
+
+
+def test_login_roles_y_permisos(cliente, evento_pagado):
+    from sqlalchemy import select
+    from app.core.auth import hash_clave
+    from app.core.database import SessionLocal
+    from app.models import Credencial, RolUsuario, Usuario
+
+    with SessionLocal() as db:
+        organizador = db.scalar(select(Usuario).where(Usuario.rol == RolUsuario.ORGANIZADOR))
+        asistente = db.scalar(select(Usuario).where(Usuario.rol == RolUsuario.ASISTENTE))
+        assert organizador and asistente
+        cuentas = [(organizador, "OrganizadorPruebas123!"), (asistente, "AsistentePruebas123!")]
+        correos = []
+        for usuario, clave in cuentas:
+            credencial = db.get(Credencial, usuario.id)
+            if credencial is None:
+                db.add(Credencial(usuario_id=usuario.id, clave_hash=hash_clave(clave)))
+            else:
+                credencial.clave_hash = hash_clave(clave)
+            correos.append(usuario.email)
+        db.commit()
+
+    response = cliente.post("/api/auth/login", json={"email": correos[0], "clave": "incorrecta"})
+    assert response.status_code == 401
+    admin = cliente.post(
+        "/api/auth/login", json={"email": correos[0], "clave": "OrganizadorPruebas123!"}
+    )
+    asist = cliente.post(
+        "/api/auth/login", json={"email": correos[1], "clave": "AsistentePruebas123!"}
+    )
+    assert admin.status_code == 200 and asist.status_code == 200
+
+    app.dependency_overrides.pop(requerir_organizador, None)
+    try:
+        ruta = "/api/indicadores"
+        assert cliente.get(ruta).status_code == 401
+        assert cliente.get(
+            ruta, headers={"Authorization": f"Bearer {asist.json()['access_token']}"}
+        ).status_code == 403
+        assert cliente.get(
+            ruta, headers={"Authorization": f"Bearer {admin.json()['access_token']}"}
+        ).status_code == 200
+        assert cliente.get(
+            "/api/auth/yo", headers={"Authorization": f"Bearer {admin.json()['access_token']}"}
+        ).json()["rol"] == "organizador"
+    finally:
+        app.dependency_overrides[requerir_organizador] = lambda: None
