@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     app_nombre: str = "AcreditaQR API"
     app_version: str = "1.0.0"
     debug: bool = False
+    auth_secret: str = ""
+    auth_duracion_horas: int = 8
 
     # --- PostgreSQL ---
     postgres_user: str = "acreditaqr"

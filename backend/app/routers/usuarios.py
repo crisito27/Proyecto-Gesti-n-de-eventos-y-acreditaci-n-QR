@@ -1,6 +1,7 @@
 """Endpoints de usuarios y organizadores."""
 
 from fastapi import APIRouter, Depends, status
+from app.core.auth import requerir_organizador
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -15,7 +16,7 @@ from app.services import evento_service, usuario_service
 router = APIRouter(tags=["Usuarios y organizadores"])
 
 
-@router.get("/usuarios", response_model=list[UsuarioSalida], summary="Listar usuarios")
+@router.get("/usuarios", response_model=list[UsuarioSalida], summary="Listar usuarios", dependencies=[Depends(requerir_organizador)])
 def listar_usuarios(db: Session = Depends(get_db)):
     return usuario_service.listar_usuarios(db)
 
@@ -25,6 +26,7 @@ def listar_usuarios(db: Session = Depends(get_db)):
     response_model=UsuarioSalida,
     status_code=status.HTTP_201_CREATED,
     summary="Registrar un usuario",
+    dependencies=[Depends(requerir_organizador)],
 )
 def crear_usuario(datos: UsuarioCrear, db: Session = Depends(get_db)):
     """Registra un asistente u organizador.
@@ -34,7 +36,7 @@ def crear_usuario(datos: UsuarioCrear, db: Session = Depends(get_db)):
     return usuario_service.crear_usuario(db, datos)
 
 
-@router.get("/usuarios/{usuario_id}", response_model=UsuarioSalida, summary="Obtener un usuario")
+@router.get("/usuarios/{usuario_id}", response_model=UsuarioSalida, summary="Obtener un usuario", dependencies=[Depends(requerir_organizador)])
 def obtener_usuario(usuario_id: int, db: Session = Depends(get_db)):
     return usuario_service.obtener_usuario(db, usuario_id)
 
@@ -51,6 +53,7 @@ def listar_organizadores(db: Session = Depends(get_db)):
     response_model=OrganizadorSalida,
     status_code=status.HTTP_201_CREATED,
     summary="Crear perfil de organizador",
+    dependencies=[Depends(requerir_organizador)],
 )
 def crear_organizador(datos: OrganizadorCrear, db: Session = Depends(get_db)):
     """Convierte a un usuario existente en organizador.

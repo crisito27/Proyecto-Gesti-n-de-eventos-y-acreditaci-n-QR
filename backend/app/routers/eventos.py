@@ -1,6 +1,7 @@
 """Endpoints de categorías y eventos."""
 
 from fastapi import APIRouter, Depends, Query, status
+from app.core.auth import requerir_organizador
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -32,6 +33,7 @@ def listar_categorias(db: Session = Depends(get_db)):
     response_model=CategoriaSalida,
     status_code=status.HTTP_201_CREATED,
     summary="Crear categoría",
+    dependencies=[Depends(requerir_organizador)],
 )
 def crear_categoria(datos: CategoriaCrear, db: Session = Depends(get_db)):
     return evento_service.crear_categoria(db, datos.nombre)
@@ -59,6 +61,7 @@ def listar_eventos(
     response_model=EventoSalida,
     status_code=status.HTTP_201_CREATED,
     summary="Crear evento",
+    dependencies=[Depends(requerir_organizador)],
 )
 def crear_evento(datos: EventoCrear, db: Session = Depends(get_db)):
     """Crea un evento en estado **borrador**. No acepta inscripciones hasta publicarse."""
@@ -71,7 +74,7 @@ def obtener_evento(evento_id: int, db: Session = Depends(get_db)):
     return evento_service.a_salida(db, evento_service.obtener_evento(db, evento_id))
 
 
-@router.put("/eventos/{evento_id}", response_model=EventoSalida, summary="Actualizar evento")
+@router.put("/eventos/{evento_id}", response_model=EventoSalida, summary="Actualizar evento", dependencies=[Depends(requerir_organizador)])
 def actualizar_evento(evento_id: int, datos: EventoActualizar, db: Session = Depends(get_db)):
     """Actualización parcial.
 
@@ -82,7 +85,7 @@ def actualizar_evento(evento_id: int, datos: EventoActualizar, db: Session = Dep
 
 
 @router.post(
-    "/eventos/{evento_id}/publicar", response_model=EventoSalida, summary="Publicar evento"
+    "/eventos/{evento_id}/publicar", response_model=EventoSalida, summary="Publicar evento", dependencies=[Depends(requerir_organizador)]
 )
 def publicar_evento(evento_id: int, db: Session = Depends(get_db)):
     """Habilita las inscripciones. Exige que el evento tenga descripción."""
@@ -90,7 +93,7 @@ def publicar_evento(evento_id: int, db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/eventos/{evento_id}/cancelar", response_model=EventoSalida, summary="Cancelar evento"
+    "/eventos/{evento_id}/cancelar", response_model=EventoSalida, summary="Cancelar evento", dependencies=[Depends(requerir_organizador)]
 )
 def cancelar_evento(evento_id: int, db: Session = Depends(get_db)):
     """Cancela el evento y, con él, todas sus inscripciones vigentes."""
@@ -101,6 +104,7 @@ def cancelar_evento(evento_id: int, db: Session = Depends(get_db)):
     "/eventos/{evento_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar evento",
+    dependencies=[Depends(requerir_organizador)],
 )
 def eliminar_evento(evento_id: int, db: Session = Depends(get_db)):
     """Sólo se permite si el evento no tiene inscritos. Si los tiene, responde **409**."""

@@ -8,7 +8,7 @@ export const listarInscripciones = (filtros = {}) =>
     usuario_id: filtros.usuarioId,
   });
 
-export const obtenerInscripcion = (id) => api.get(`/inscripciones/${id}`);
+export const obtenerInscripcion = (id, codigo) => api.getConCodigo(`/inscripciones/${id}`, codigo);
 
 export const buscarPorCodigo = (codigo) =>
   api.get(`/inscripciones/codigo/${encodeURIComponent(codigo)}`);
@@ -22,11 +22,11 @@ export const inscribirse = ({ eventoId, nombre, email, telefono }) =>
     telefono,
   });
 
-export const cancelarInscripcion = (id) => api.post(`/inscripciones/${id}/cancelar`);
+export const cancelarInscripcion = (id, codigo) => api.postConCodigo(`/inscripciones/${id}/cancelar`, {}, codigo);
 
 /* --- Pagos --- */
 
-export const pagar = (inscripcionId, metodo = "tarjeta") =>
-  api.post("/pagos", { inscripcion_id: inscripcionId, metodo });
+export const pagar = (inscripcionId, metodo = "tarjeta", codigo) =>
+  api.postConCodigo("/pagos", { inscripcion_id: inscripcionId, metodo }, codigo);
 
-export const obtenerComprobante = (pagoId) => api.get(`/pagos/${pagoId}/comprobante`);
+export const obtenerComprobante = (pagoId, codigo) => api.getConCodigo(`/pagos/${pagoId}/comprobante`, codigo);
