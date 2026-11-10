@@ -11,6 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.mongo import get_mongo_db, get_registros
+from app.core.auth import requerir_organizador
 from app.main import app
 
 
@@ -22,6 +23,7 @@ def test_bitacora_acreditacion_en_mongo_real():
     registros = get_mongo_db()["registros_acceso_pruebas_integracion"]
     codigo = f"EVQR-TEST-{uuid.uuid4().hex[:12]}".upper()
     app.dependency_overrides[get_registros] = lambda: registros
+    app.dependency_overrides[requerir_organizador] = lambda: None
 
     try:
         with TestClient(app) as cliente:
@@ -47,3 +49,4 @@ def test_bitacora_acreditacion_en_mongo_real():
     finally:
         registros.delete_many({"codigo": codigo})
         app.dependency_overrides.pop(get_registros, None)
+        app.dependency_overrides.pop(requerir_organizador, None)
