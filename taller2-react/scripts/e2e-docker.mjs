@@ -59,6 +59,7 @@ try {
   await pagina.locator("#login-clave").fill("ClavePruebaSoloCI-12345");
   await pagina.getByRole("button",{name:"Ingresar",exact:true}).click();
   await pagina.getByRole("heading",{name:"Panel del organizador"}).waitFor();
+  await pagina.locator("table tbody tr").first().waitFor();
   await capturar("06-panel-organizador-autenticado");
 
   await pagina.getByRole("button",{name:"Acreditación"}).click();
@@ -74,6 +75,7 @@ try {
 
   await pagina.getByRole("button",{name:"Dashboard"}).click();
   await pagina.getByRole("heading",{name:"Dashboard de aforo"}).waitFor();
+  await pagina.locator(".stub-aforo-numero").first().waitFor();
   await capturar("09-dashboard-postgresql");
 
   await pagina.getByRole("button",{name:"Bitácora"}).click();
@@ -92,7 +94,7 @@ try {
   const respSwagger=await sw.goto(api+"/docs",{waitUntil:"networkidle"});
   assert.equal(respSwagger.status(),200);
   await sw.getByText("AcreditaQR API").first().waitFor();
-  await capturar("11-swagger-fastapi-docker",sw);
+  await sw.screenshot({path: pruebas+"/11-swagger-fastapi-docker.png",fullPage:false});
   await sw.close();
 
   await pagina.setViewportSize({width:390,height:844});
