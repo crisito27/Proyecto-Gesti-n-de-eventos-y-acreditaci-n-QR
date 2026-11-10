@@ -529,7 +529,10 @@ La API incluye `POST /api/auth/login` y `GET /api/auth/yo` en Swagger.
 ## GitHub Pages: demostración estática versus sistema Full Stack
 
 La página pública se genera desde `taller2-react/` mediante
-`.github/workflows/deploy-pages.yml`, con cambios en **master**.
+`.github/workflows/deploy-pages.yml`, con cambios en **master**. Como GitHub
+Pages está configurado para publicar desde la raíz de `master`, el workflow
+copia la compilación al directorio raíz sin borrar el proyecto. El index HTML
+anterior de la Actividad 1 se conserva en `docs/actividad1-index-original.html`.
 Dirección prevista:
 
 https://crisito27.github.io/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/
@@ -571,3 +574,12 @@ Evidencias verificables:
 Cada integrante debe revisar los cambios, probar el flujo en su navegador,
 completar su declaración de IA y explicar la arquitectura. Los resultados de
 CI no reemplazan la demostración ni garantizan una calificación.
+
+### Evidencia real de la demo de Pages
+
+La primera ejecución exitosa de Chromium (en la rama de revisión) está en
+https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/actions/runs/42736581911 .
+Su artefacto `capturas-demo-acreditaqr` contiene imágenes reales del
+navegador (catálogo, ticket, acreditación, duplicado, pago simulado,
+dashboard, bitácora y móvil). Esta evidencia **solo** acredita el modo demo;
+la suite de Docker acredita PostgreSQL y MongoDB por separado.
