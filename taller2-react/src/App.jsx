@@ -29,6 +29,7 @@ import { ErrorCarga } from "./components/EstadoRecurso";
 import Eventos from "./pages/Eventos";
 import MiEntrada from "./pages/MiEntrada";
 import Organizador from "./pages/Organizador";
+import LoginOrganizador from "./components/LoginOrganizador";
 
 import { useRecurso } from "./hooks/useRecurso";
 import {
@@ -38,10 +39,17 @@ import {
   obtenerEvento,
 } from "./services/eventosApi";
 import { inscribirse } from "./services/inscripcionesApi";
-import { MODO_DEMO } from "./services/apiCliente";
+import { api, MODO_DEMO } from "./services/apiCliente";
 import { reiniciarDemo } from "./services/demoApi";
 
 const CLAVE_INSCRIPCION = "acreditaqr-inscripcion-id";
+const CLAVE_CODIGO = "acreditaqr-codigo-entrada";
+const CLAVE_TOKEN = "acreditaqr-token";
+
+function leerCodigoGuardado() {
+  try { return localStorage.getItem(CLAVE_CODIGO) ?? ""; }
+  catch { return ""; }
+}
 
 function leerInscripcionGuardada() {
   try {
@@ -57,6 +65,9 @@ function App() {
   const [version, setVersion] = useState(0);
 
   const [inscripcionId, setInscripcionId] = useState(leerInscripcionGuardada);
+  const [codigoEntrada, setCodigoEntrada] = useState(leerCodigoGuardado);
+  const [organizador, setOrganizador] = useState(null);
+  const [revisandoSesion, setRevisandoSesion] = useState(false);
   const [eventoAInscribir, setEventoAInscribir] = useState(null);
   const [eventoDetalle, setEventoDetalle] = useState(null);
 
@@ -65,16 +76,42 @@ function App() {
   const organizadores = useRecurso(listarOrganizadores, [], { inicial: [] });
   const eventos = useRecurso(() => listarEventos(), [version], { inicial: [] });
 
-  // Guarda sólo la referencia a la última inscripción.
+  // La sesión se valida contra la API, no solo por tener un token almacenado.
+  useEffect(() => {
+    if (MODO_DEMO || !sessionStorage.getItem(CLAVE_TOKEN)) return;
+    let vigente = true;
+    Promise.resolve().then(() => { if (vigente) setRevisandoSesion(true); });
+    api.get("/auth/yo")
+      .then((usuario) => { if (vigente && usuario.rol === "organizador") setOrganizador(usuario); })
+      .catch(() => { if (vigente) sessionStorage.removeItem(CLAVE_TOKEN); })
+      .finally(() => { if (vigente) setRevisandoSesion(false); });
+    return () => { vigente = false; };
+  }, []);
+
+  function ingresar(sesion) {
+    sessionStorage.setItem(CLAVE_TOKEN, sesion.access_token);
+    setOrganizador(sesion.usuario);
+    registrarCambio();
+  }
+
+  function cerrarSesion() {
+    sessionStorage.removeItem(CLAVE_TOKEN);
+    setOrganizador(null);
+    setVista("eventos");
+  }
+
+  // Guarda la referencia y el código privado de la última inscripción.
   useEffect(() => {
     try {
       if (inscripcionId) localStorage.setItem(CLAVE_INSCRIPCION, String(inscripcionId));
       else localStorage.removeItem(CLAVE_INSCRIPCION);
+      if (codigoEntrada) localStorage.setItem(CLAVE_CODIGO, codigoEntrada);
+      else localStorage.removeItem(CLAVE_CODIGO);
     } catch {
       // Si el navegador bloquea el almacenamiento, la aplicación sigue
       // funcionando: sólo se pierde la referencia al recargar.
     }
-  }, [inscripcionId]);
+  }, [inscripcionId, codigoEntrada]);
 
   const registrarCambio = useCallback(() => setVersion((v) => v + 1), []);
 
@@ -92,6 +129,7 @@ function App() {
       ...datos,
     });
     setInscripcionId(inscripcion.id);
+    setCodigoEntrada(inscripcion.codigo);
     setEventoAInscribir(null);
     setVista("mientrada");
     registrarCambio();
@@ -106,7 +144,8 @@ function App() {
 
   return (
     <>
-      <Navbar vistaActiva={vista} onCambiarVista={setVista} />
+      <Navbar vistaActiva={vista} onCambiarVista={setVista}
+        organizador={organizador} onCerrarSesion={cerrarSesion} />
 
       {MODO_DEMO && (
         <div className="container mt-3">
@@ -143,18 +182,24 @@ function App() {
         {vista === "mientrada" && (
           <MiEntrada
             inscripcionId={inscripcionId}
+            codigoEntrada={codigoEntrada}
             onIrAEventos={() => setVista("eventos")}
             onCambio={registrarCambio}
           />
         )}
 
-        {vista === "organizador" && (
+        {vista === "organizador" && (MODO_DEMO || organizador) && (
           <Organizador
             categorias={categorias.datos ?? []}
             organizadores={organizadores.datos ?? []}
             eventos={eventos.datos ?? []}
             onCambio={registrarCambio}
           />
+        )}
+
+        {vista === "organizador" && !MODO_DEMO && !organizador && (
+          revisandoSesion ? <p className="text-muted">Verificando sesión…</p> :
+          <LoginOrganizador onIngreso={ingresar} />
         )}
       </main>
 
