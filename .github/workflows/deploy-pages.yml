@@ -3,7 +3,7 @@ name: Deploy React app to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -34,6 +34,9 @@ jobs:
         run: npm run lint
 
       - name: Build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL || '' }}
+          VITE_DEMO_MODE: ${{ vars.VITE_API_URL == '' && 'true' || 'false' }}
         run: npm run build
 
       - name: Deploy dist to gh-pages

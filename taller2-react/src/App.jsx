@@ -38,6 +38,8 @@ import {
   obtenerEvento,
 } from "./services/eventosApi";
 import { inscribirse } from "./services/inscripcionesApi";
+import { MODO_DEMO } from "./services/apiCliente";
+import { reiniciarDemo } from "./services/demoApi";
 
 const CLAVE_INSCRIPCION = "acreditaqr-inscripcion-id";
 
@@ -105,6 +107,18 @@ function App() {
   return (
     <>
       <Navbar vistaActiva={vista} onCambiarVista={setVista} />
+
+      {MODO_DEMO && (
+        <div className="container mt-3">
+          <div className="alert alert-warning d-flex align-items-start justify-content-between gap-3 flex-wrap" role="status">
+            <div>
+              <strong>Demostración interactiva — datos ficticios.</strong>
+              <div className="small">Esta versión de GitHub Pages guarda eventos, inscripciones y acreditaciones solamente en este navegador. No comparte información con otros usuarios ni utiliza PostgreSQL, MongoDB o el backend real. Para evaluar el Hito 3 Full Stack usa el entorno Docker descrito en el README.</div>
+            </div>
+            <button className="btn btn-sm btn-outline-dark" type="button" onClick={() => { reiniciarDemo(); window.location.reload(); }}>Reiniciar demo</button>
+          </div>
+        </div>
+      )}
 
       <main className="container py-4">
         {errorCatalogos && (

@@ -11,6 +11,10 @@
        reciben objetos.
    ========================================================= */
 
+import { demoSolicitar } from "./demoApi";
+
+export const MODO_DEMO = import.meta.env.VITE_DEMO_MODE === "true";
+
 // Vite expone las variables que empiezan con VITE_. Si no está
 // definida, se asume el backend local levantado con Docker Compose.
 const URL_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
@@ -26,6 +30,7 @@ export class ErrorApi extends Error {
 }
 
 async function solicitar(ruta, opciones = {}) {
+  if (MODO_DEMO) return demoSolicitar(ruta, opciones);
   let respuesta;
 
   try {
