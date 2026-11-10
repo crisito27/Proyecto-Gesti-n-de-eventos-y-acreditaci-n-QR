@@ -9,7 +9,7 @@ on:
 
 jobs:
   e2e-demo-pages:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: taller2-react
@@ -51,4 +51,4 @@ jobs:
           retention-days: 14
       - name: Logs de preview si falla
         if: failure()
-        run: cat /tmp/acreditaqr-preview.log
+        run: if [ -f /tmp/acreditaqr-preview.log ]; then cat /tmp/acreditaqr-preview.log; else echo 'No llegó a iniciarse el servidor'; fi
