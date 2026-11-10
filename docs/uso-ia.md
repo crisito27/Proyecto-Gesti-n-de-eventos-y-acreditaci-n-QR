@@ -189,3 +189,18 @@ es mejor estudiarlas que declararlas.)*
 - **Resultado propuesto:** bloqueo transaccional de eventos durante inscripción y cambios de aforo, Dockerfile con pruebas disponibles, instalación reproducible de dependencias del frontend, prueba optativa contra MongoDB real y workflow de CI para React/API/SQL/NoSQL.
 - **Validación técnica:** revisión estática del contenido y coherencia entre archivos. El resultado de GitHub Actions debe consultarse después de ejecutarse; no se afirma aquí que las pruebas hayan pasado.
 - **Validación humana y aprendizaje:** **pendiente de completar por el equipo**, tras revisar la PR, levantar los contenedores, reproducir los flujos reales y explicar por qué `SELECT FOR UPDATE` evita la carrera por el último cupo. No declarar esta verificación como realizada hasta ejecutarla.
+
+
+## Nueva revisión asistida de GitHub Pages, seguridad y validaciones — noviembre 2026
+
+**Herramienta:** ChatGPT (GPT-6), conectado a GitHub con autorización para crear y modificar archivos, ramas y pull requests.
+
+**Solicitud representativa:** «quiero que realices todo eso y dejes la pagina funcionando en github pages», tras revisar la rúbrica del Hito 3 y las brechas sobre autenticación, demostración, pruebas y despliegue.
+
+**Cambios producidos:** autenticación organizador con contraseña PBKDF2 y token HMAC, controles de rol por endpoint, prueba de posesión del código para entradas privadas, formulario de login React, separación clara entre API real y demo autónoma para Pages, workflow de despliegue desde master, flujo de prueba de navegador con Playwright y actualización de documentación de limitaciones.
+
+**Validación automatizada:** el workflow `hito3-ci.yml` verifica compilación de React, pruebas API, PostgreSQL y MongoDB. El workflow `evidencia-pages.yml` comprueba interacciones en Chromium con datos ficticios y produce capturas reales de esa demostración. Se debe consultar el resultado de cada ejecución; no atribuir a ninguna prueba una ejecución que no haya pasado.
+
+**Validación humana:** queda a cargo del equipo probar la versión real desde navegador, revisar los logs, explicar cada cambio y dejar constancia de los resultados. La herramienta no ha validado por los integrantes ni debe sustituir la defensa individual.
+
+**Aprendizaje técnico:** un sitio de GitHub Pages no puede alojar FastAPI ni las bases de datos. Por eso la demo estática se marca como tal; para una web Full Stack pública se requiere una API externa HTTPS y sus bases persistentes, con CORS y secretos configurados.
