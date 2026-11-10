@@ -43,6 +43,7 @@ jobs:
         run: npm run build
 
       - name: Publicar React en la raíz de master (GitHub Pages)
+        working-directory: .
         run: |
           # Se actualizan únicamente los archivos públicos; el código fuente
           # del backend, los tests y los documentos se conservan.
