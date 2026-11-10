@@ -1,6 +1,7 @@
 """Endpoints de inscripciones."""
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Header, Query, status
+from app.core.auth import comprobar_entrada, requerir_organizador
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
@@ -41,7 +42,7 @@ def _a_detalle(db: Session, inscripcion) -> InscripcionDetalle:
 
 
 @router.get(
-    "/inscripciones", response_model=list[InscripcionSalida], summary="Listar inscripciones"
+    "/inscripciones", response_model=list[InscripcionSalida], summary="Listar inscripciones", dependencies=[Depends(requerir_organizador)]
 )
 def listar_inscripciones(
     evento_id: int | None = Query(default=None),
@@ -56,6 +57,7 @@ def listar_inscripciones(
     response_model=InscripcionDetalle,
     status_code=status.HTTP_201_CREATED,
     summary="Inscribir a un usuario existente",
+    dependencies=[Depends(requerir_organizador)],
 )
 def crear_inscripcion(datos: InscripcionCrear, db: Session = Depends(get_db)):
     """Responde **409** si ya está inscrito o si el aforo está completo."""
@@ -89,14 +91,21 @@ def inscripcion_publica(datos: InscripcionPublica, db: Session = Depends(get_db)
     response_model=InscripcionDetalle,
     summary="Obtener una inscripción",
 )
-def obtener_inscripcion(inscripcion_id: int, db: Session = Depends(get_db)):
-    return _a_detalle(db, inscripcion_service.obtener_inscripcion(db, inscripcion_id))
+def obtener_inscripcion(
+    inscripcion_id: int,
+    codigo_entrada: str | None = Header(default=None, alias="X-Codigo-Entrada"),
+    db: Session = Depends(get_db),
+):
+    inscripcion = inscripcion_service.obtener_inscripcion(db, inscripcion_id)
+    comprobar_entrada(inscripcion.codigo, codigo_entrada)
+    return _a_detalle(db, inscripcion)
 
 
 @router.get(
     "/inscripciones/codigo/{codigo}",
     response_model=InscripcionDetalle,
     summary="Buscar inscripción por su código",
+    dependencies=[Depends(requerir_organizador)],
 )
 def obtener_por_codigo(codigo: str, db: Session = Depends(get_db)):
     """Consulta sin acreditar. Útil para verificar una entrada antes de usarla."""
@@ -113,6 +122,12 @@ def obtener_por_codigo(codigo: str, db: Session = Depends(get_db)):
     response_model=InscripcionSalida,
     summary="Cancelar una inscripción",
 )
-def cancelar_inscripcion(inscripcion_id: int, db: Session = Depends(get_db)):
-    """Libera el cupo. Responde **422** si la persona ya fue acreditada."""
+def cancelar_inscripcion(
+    inscripcion_id: int,
+    codigo_entrada: str | None = Header(default=None, alias="X-Codigo-Entrada"),
+    db: Session = Depends(get_db),
+):
+    """Libera el cupo solo si el solicitante presenta su código original."""
+    inscripcion = inscripcion_service.obtener_inscripcion(db, inscripcion_id)
+    comprobar_entrada(inscripcion.codigo, codigo_entrada)
     return inscripcion_service.cancelar_inscripcion(db, inscripcion_id)
