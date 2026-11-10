@@ -34,9 +34,14 @@ async function solicitar(ruta, opciones = {}) {
   let respuesta;
 
   try {
+    const token = sessionStorage.getItem("acreditaqr-token");
     respuesta = await fetch(`${URL_BASE}${ruta}`, {
-      headers: { "Content-Type": "application/json" },
       ...opciones,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...opciones.headers,
+      },
     });
   } catch (fallo) {
     // fetch sólo rechaza cuando no hubo respuesta: el servidor está
@@ -87,6 +92,9 @@ function conParametros(ruta, parametros = {}) {
 
 export const api = {
   get: (ruta, parametros) => solicitar(conParametros(ruta, parametros)),
+  getConCodigo: (ruta, codigo) => solicitar(ruta, { headers: codigo ? { "X-Codigo-Entrada": codigo } : {} }),
+  postConCodigo: (ruta, cuerpo, codigo) =>
+    solicitar(ruta, { method: "POST", body: JSON.stringify(cuerpo ?? {}), headers: codigo ? { "X-Codigo-Entrada": codigo } : {} }),
   post: (ruta, cuerpo) =>
     solicitar(ruta, { method: "POST", body: JSON.stringify(cuerpo ?? {}) }),
   put: (ruta, cuerpo) =>
