@@ -51,7 +51,7 @@ def buscar_por_codigo(db: Session, codigo: str) -> Inscripcion | None:
 
 
 def crear_inscripcion(db: Session, evento_id: int, usuario_id: int) -> Inscripcion:
-    evento = evento_service.obtener_evento(db, evento_id)
+    evento = evento_service.bloquear_evento(db, evento_id)
     usuario_service.obtener_usuario(db, usuario_id)
 
     # Regla 1: sólo se puede uno inscribir en eventos publicados.
@@ -76,6 +76,8 @@ def crear_inscripcion(db: Session, evento_id: int, usuario_id: int) -> Inscripci
             codigo="inscripcion_duplicada",
         )
 
+    # Se retiene el bloqueo de la fila del evento durante el conteo y el
+    # commit: inscripciones concurrentes no pueden exceder el último cupo.
     # Regla 3: no superar el aforo.
     inscritos = evento_service.contar_inscritos(db, evento_id)
     if inscritos >= evento.aforo_max:

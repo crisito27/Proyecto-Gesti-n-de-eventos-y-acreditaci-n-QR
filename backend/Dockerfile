@@ -15,6 +15,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+# Incluye la suite para que `docker compose exec backend python -m pytest tests/` funcione.
+COPY tests ./tests
 
 EXPOSE 8000
 

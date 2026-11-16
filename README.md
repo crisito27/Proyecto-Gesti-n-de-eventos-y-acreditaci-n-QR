@@ -52,7 +52,7 @@ cambió es dónde viven los datos y quién aplica las reglas.
 | Código de entrada generado con `Math.random()` | Generado en el servidor con `secrets.token_hex` |
 | Validación de aforo y duplicados en el cliente | Reglas de negocio en el backend, con restricciones en la base |
 | Open-Meteo llamado desde el navegador | Llamado desde el backend, que conoce el evento |
-| Estado completo en `localStorage` | Sólo el id de la última inscripción, como referencia |
+| Estado completo en `localStorage` | Sólo el id y código privado de la última entrada, para recuperarla de forma controlada |
 
 Tres decisiones merecen explicación:
 
@@ -410,6 +410,8 @@ docker compose exec backend python -m pytest tests/ -v
 
 La suite contiene 16 pruebas automatizadas sobre la API. En GitHub Actions se ejecutan con PostgreSQL y MongoDB como servicios, usando MongoDB simulado en las pruebas unitarias de bitácora:
 
+20 pruebas de API, concurrencia, autenticación e integración incluidas. Las primeras 15 utilizan PostgreSQL y `mongomock` para aislar la bitácora; la prueba adicional verifica MongoDB real cuando se habilita expresamente:
+
 | Prueba | Qué verifica |
 |---|---|
 | `test_salud` | El servicio responde |
@@ -431,11 +433,33 @@ La suite contiene 16 pruebas automatizadas sobre la API. En GitHub Actions se ej
 
 La suite automatizada del frontend se ejecuta en GitHub Actions mediante `npm ci`, `npm run lint` y `npm run build`. La revisión visual en navegador, el recorrido completo con clics y las capturas responsive siguen siendo una comprobación manual del equipo; no se consideran aprobados sólo por existir el código.
 
+| `test_bitacora_acreditacion_en_mongo_real` | Escritura y lectura HTTP en una colección aislada de MongoDB real (opcional) |
+| `test_ultimo_cupo_no_se_sobrevende_con_inscripciones_simultaneas` | Solicitudes concurrentes no exceden aforo |
+| `test_pagos_simultaneos_reciben_comprobantes_unicos` | Pagos concurrentes reciben números únicos |
+| `test_entrada_privada_exige_codigo` | Entrada ajena rechazada sin código correcto |
+| `test_login_roles_y_permisos` | Login, sesión, 401 sin login y 403 por rol |
+
+Para ejecutar **también la integración con MongoDB real** (necesita el servicio `mongo`):
+
+```bash
+docker compose exec -e RUN_MONGO_INTEGRACION=1 backend python -m pytest tests/ -v
+```
+
+Un workflow de GitHub Actions (`.github/workflows/hito3-ci.yml`) comprueba el
+`lint` y `build` de React, inicia PostgreSQL/MongoDB y corre las pruebas con
+MongoDB real en una base efímera de CI. **Consulta el estado del workflow o PR**:
+la existencia del YAML no es evidencia de una ejecución aprobada.
+
+La demostración manual en navegador (inscribir → pagar → acreditar → leer
+bitácora, además de carga, error, vacío y responsive) debe documentarse con
+capturas o un video obtenidos durante la ejecución; no se aportan capturas
+simuladas como evidencias reales.
+
 ---
 
 ## 10. Limitaciones conocidas
 
-- **No hay autenticación.** Cualquiera puede acceder al panel del organizador.
+- **Autenticación del organizador agregada.** Los endpoints administrativos requieren token de sesión y rol organizador. Las entradas públicas requieren su código original para consultas, cancelaciones y pagos. No existe aún registro con contraseña de asistentes ni recuperación automática de cuentas.
   Implementar sesiones y autorización por rol excedía el alcance de este hito;
   el modelo de datos ya contempla el campo `rol` para soportarlo.
 - **El pago es simulado.** No hay pasarela real: la transacción se aprueba
@@ -542,3 +566,96 @@ hacia las ramas de integración. Ejecuta la suite del backend con PostgreSQL y
 MongoDB como servicios, y comprueba en el frontend la instalación reproducible,
 el análisis ESLint y la compilación de producción. El resultado de cada
 ejecución queda visible en la pestaña **Actions** del repositorio.
+
+---
+
+## Acceso seguro para la demostración Full Stack (Hito 3)
+
+El panel del organizador **requiere iniciar sesión** en el modo Full Stack.
+Se utiliza una nueva tabla SQL `credenciales` (sin modificar la tabla
+`usuarios` de versiones anteriores), contraseñas PBKDF2-SHA256 con salt,
+tokens temporales firmados con HMAC y verificación del rol desde PostgreSQL.
+Los tokens se guardan solo en `sessionStorage` del navegador, y no en Git.
+
+Después de iniciar con Docker y cargar el seed:
+
+```bash
+docker compose exec backend python -m app.seed
+
+# Usa un correo organizador del seed y una contraseña propia de al menos 12 caracteres.
+docker compose exec -e ORGANIZADOR_EMAIL=ingenieria@uandresbello.edu -e ORGANIZADOR_PASSWORD=CAMBIAR_POR_TU_CLAVE_PRIVADA_DE_12_O_MAS backend python -m app.configurar_organizador
+```
+
+**Cambia la contraseña del ejemplo antes de ejecutar el comando** y no la
+incluyas en un commit ni en capturas. En un despliegue real, define
+`AUTH_SECRET` con una cadena privada, aleatoria, de al menos 32 caracteres.
+Si se deja vacío, el proceso genera un secreto efímero al iniciar y las
+sesiones expirarán tras reiniciar. El archivo `.env` no debe subirse a Git.
+
+La aplicación da acceso al panel únicamente después del login. Un asistente
+puede inscribirse sin cuenta y conserva el id y el código de su última entrada
+en el navegador. Para ver esa entrada, cancelarla o pagarla, debe enviar el
+encabezado `X-Codigo-Entrada`; otro navegador sin el código recibe HTTP 403.
+**Límite académico:** conocer el código equivale a poseer la entrada; aún no
+hay verificación de correo, restablecimiento de contraseña ni autenticación
+de todos los asistentes.
+
+La API incluye `POST /api/auth/login` y `GET /api/auth/yo` en Swagger.
+
+## GitHub Pages: demostración estática versus sistema Full Stack
+
+La página pública se genera desde `taller2-react/` mediante
+`.github/workflows/deploy-pages.yml`, con cambios en **master**. Como GitHub
+Pages está configurado para publicar desde la raíz de `master`, el workflow
+copia la compilación al directorio raíz sin borrar el proyecto. El index HTML
+anterior de la Actividad 1 se conserva en `docs/actividad1-index-original.html`.
+Dirección prevista:
+
+https://crisito27.github.io/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/
+
+**GitHub Pages no ejecuta FastAPI, PostgreSQL ni MongoDB.** Si la variable
+del repositorio `VITE_API_URL` no está definida, el workflow publica
+automáticamente la aplicación React en **modo demostración**:
+
+- Usa un conjunto explícito de eventos ficticios.
+- Permite inscripciones, pagos simulados, QR, acreditación, panel y bitácora.
+- Guarda el estado solo en `localStorage` de ese navegador: **no hay datos
+  compartidos ni persistencia SQL/NoSQL en Pages**.
+- Muestra una advertencia permanente y permite reiniciar los datos.
+- No inventa un pronóstico meteorológico: cuando no existe API externa,
+  muestra el estado sin datos.
+- No tiene credenciales de organizador reales: el panel es parte de la demo.
+  Nunca introduzcas contraseñas reales en esa versión.
+
+Para que **Pages se conecte al sistema Full Stack en Internet**, primero hay
+que alojar FastAPI, PostgreSQL y MongoDB en infraestructura externa con HTTPS.
+Después configura en GitHub:
+`Settings → Secrets and variables → Actions → Variables → New repository variable`,
+nombre `VITE_API_URL`, valor `https://API-REAL-DEL-PROYECTO/api`.
+Actualiza `CORS_ORIGENES` del backend con la dirección exacta de Pages.
+Al volver a ejecutar el workflow de despliegue, React consumirá la API real
+y desactivará el modo demo. **No configures una URL inexistente**: dejaría
+los formularios sin conexión. GitHub Pages por sí solo no puede cubrir el
+requisito de persistencia del Hito 3.
+
+Evidencias verificables:
+- Backend real: `.github/workflows/hito3-ci.yml` (suite con PostgreSQL/MongoDB).
+- Demo visual real: `.github/workflows/evidencia-pages.yml`. Las capturas
+  generadas por Chromium se adjuntan como artefacto `capturas-demo-acreditaqr`
+  en la ejecución de Actions; no son pruebas de una base SQL en Pages.
+- Guion de exposición: [docs/guia-defensa-hito3.md](docs/guia-defensa-hito3.md).
+
+## Pendientes humanos
+
+Cada integrante debe revisar los cambios, probar el flujo en su navegador,
+completar su declaración de IA y explicar la arquitectura. Los resultados de
+CI no reemplazan la demostración ni garantizan una calificación.
+
+### Evidencia real de la demo de Pages
+
+La primera ejecución exitosa de Chromium (en la rama de revisión) está en
+https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/actions/runs/42736581911 .
+Su artefacto `capturas-demo-acreditaqr` contiene imágenes reales del
+navegador (catálogo, ticket, acreditación, duplicado, pago simulado,
+dashboard, bitácora y móvil). Esta evidencia **solo** acredita el modo demo;
+la suite de Docker acredita PostgreSQL y MongoDB por separado.

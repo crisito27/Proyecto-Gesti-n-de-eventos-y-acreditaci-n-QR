@@ -1,0 +1,64 @@
+name: Evidencias reales Docker Taller 3
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docker-e2e:
+    runs-on: ubuntu-24.04
+    env:
+      POSTGRES_USER: acreditaqr_evidencia
+      POSTGRES_PASSWORD: password_solo_ci_temporal
+      POSTGRES_DB: acreditaqr_evidencia
+      MONGO_DB: acreditaqr_evidencia
+      CORS_ORIGENES: http://localhost:5173,http://127.0.0.1:5173
+      AUTH_SECRET: CIClaveTemporalSoloParaPruebasNoProduccion1234567
+      DEBUG: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arrancar los cuatro contenedores reales
+        run: docker compose up -d --build --wait
+      - name: Cargar eventos y configurar organizador de prueba
+        run: |
+          docker compose exec -T backend python -m app.seed
+          docker compose exec -T -e ORGANIZADOR_EMAIL=ingenieria@uandresbello.edu -e ORGANIZADOR_PASSWORD=ClavePruebaSoloCI-12345 backend python -m app.configurar_organizador
+      - name: Verificar servicios y guardar estado de Docker
+        run: |
+          mkdir -p evidencias-docker
+          docker compose ps > evidencias-docker/00-docker-compose-ps.txt
+          docker compose ps
+          curl --fail --silent http://127.0.0.1:8000/salud > evidencias-docker/00-health-api.json
+          for intento in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:5173/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/ >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker compose logs --tail=80 frontend
+          exit 1
+      - name: Restablecer permisos después del volumen Docker
+        run: sudo chown -R "$(id -u):$(id -g)" taller2-react
+      - name: Preparar Playwright Chromium
+        working-directory: taller2-react
+        run: |
+          npm ci
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Ejecutar flujo web real contra los cuatro contenedores
+        working-directory: taller2-react
+        run: node scripts/e2e-docker.mjs
+      - name: Guardar capturas en artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencias-reales-docker-taller3
+          path: |
+            taller2-react/evidencias-docker/
+            evidencias-docker/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Diagnóstico si falla
+        if: failure()
+        run: docker compose logs --no-color --tail=100
+      - name: Apagar entorno efímero de CI
+        if: always()
+        run: docker compose down -v --remove-orphans

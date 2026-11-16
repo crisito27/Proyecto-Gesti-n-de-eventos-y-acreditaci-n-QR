@@ -21,7 +21,7 @@ from app.core.database import Base, engine
 from app.core.errores import ErrorDominio
 from app.core.mongo import crear_indices
 from app.core.realtime import gestor_realtime
-from app.routers import acreditaciones, eventos, indicadores, inscripciones, pagos, realtime, usuarios
+from app.routers import acreditaciones, auth, eventos, indicadores, inscripciones, pagos, realtime, usuarios
 
 logger = logging.getLogger("acreditaqr")
 
@@ -126,6 +126,7 @@ def salud():
 
 
 PREFIJO = "/api"
+app.include_router(auth.router, prefix=PREFIJO)
 app.include_router(usuarios.router, prefix=PREFIJO)
 app.include_router(eventos.router, prefix=PREFIJO)
 app.include_router(inscripciones.router, prefix=PREFIJO)

@@ -190,3 +190,12 @@ class Pago(Base):
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     inscripcion: Mapped["Inscripcion"] = relationship(back_populates="pago")
+
+
+class Credencial(Base):
+    """Hash de contraseña separado de usuarios históricos del Taller 2."""
+    __tablename__ = "credenciales"
+
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), primary_key=True)
+    clave_hash: Mapped[str] = mapped_column(String(220), nullable=False)
+    creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

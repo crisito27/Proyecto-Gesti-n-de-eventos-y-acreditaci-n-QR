@@ -1,9 +1,12 @@
-name: Deploy React app to GitHub Pages
+name: Deploy React app to GitHub Pages (source master)
 
 on:
   push:
     branches:
-      - main
+      - master
+    paths-ignore:
+      - 'assets/**'
+      - 'index.html'
   workflow_dispatch:
 
 jobs:
@@ -34,10 +37,24 @@ jobs:
         run: npm run lint
 
       - name: Build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL || '' }}
+          VITE_DEMO_MODE: ${{ vars.VITE_API_URL == '' && 'true' || 'false' }}
         run: npm run build
 
-      - name: Deploy dist to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./taller2-react/dist
+      - name: Publicar React en la raíz de master (GitHub Pages)
+        working-directory: .
+        run: |
+          # Se actualizan únicamente los archivos públicos; el código fuente
+          # del backend, los tests y los documentos se conservan.
+          touch taller2-react/dist/.nojekyll
+          cp -R taller2-react/dist/. .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html favicon.svg icons.svg .nojekyll assets
+          if git diff --cached --quiet; then
+            echo "El sitio está actualizado."
+          else
+            git commit -m "chore(pages): publica React compilado [skip ci]"
+            git push origin HEAD:master
+          fi

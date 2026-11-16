@@ -14,7 +14,7 @@ import { useRecurso } from "../hooks/useRecurso";
 import { obtenerComprobante, obtenerInscripcion, pagar } from "../services/inscripcionesApi";
 import { formatearPrecio } from "../utils/formato";
 
-function MiEntrada({ inscripcionId, onIrAEventos, onCambio }) {
+function MiEntrada({ inscripcionId, codigoEntrada, onIrAEventos, onCambio }) {
   const [version, setVersion] = useState(0);
   const [comprobante, setComprobante] = useState(null);
   const [pagando, setPagando] = useState(false);
@@ -22,8 +22,8 @@ function MiEntrada({ inscripcionId, onIrAEventos, onCambio }) {
   const [metodo, setMetodo] = useState("tarjeta");
 
   const { datos: inscripcion, cargando, error, recargar } = useRecurso(
-    () => obtenerInscripcion(inscripcionId),
-    [inscripcionId, version],
+    () => obtenerInscripcion(inscripcionId, codigoEntrada),
+    [inscripcionId, codigoEntrada, version],
     { activo: Boolean(inscripcionId) },
   );
 
@@ -44,8 +44,8 @@ function MiEntrada({ inscripcionId, onIrAEventos, onCambio }) {
     setErrorPago(null);
     setPagando(true);
     try {
-      const pago = await pagar(inscripcion.id, metodo);
-      const datos = await obtenerComprobante(pago.id);
+      const pago = await pagar(inscripcion.id, metodo, codigoEntrada);
+      const datos = await obtenerComprobante(pago.id, codigoEntrada);
       setComprobante(datos);
       setVersion((v) => v + 1); // recarga la inscripción, ya confirmada
       onCambio?.();

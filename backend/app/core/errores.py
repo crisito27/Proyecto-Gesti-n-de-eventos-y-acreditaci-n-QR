@@ -48,3 +48,13 @@ class ServicioExterno(ErrorDominio):
 
     estado_http = 503
     codigo = "servicio_externo"
+
+
+class SinAutenticacion(ErrorDominio):
+    estado_http = 401
+    codigo = "no_autenticado"
+
+
+class SinPermiso(ErrorDominio):
+    estado_http = 403
+    codigo = "sin_permiso"

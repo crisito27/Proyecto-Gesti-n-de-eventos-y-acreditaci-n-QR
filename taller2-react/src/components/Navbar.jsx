@@ -7,7 +7,7 @@ const VISTAS = [
   { clave: "organizador", etiqueta: "Organizador" },
 ];
 
-function Navbar({ vistaActiva, onCambiarVista }) {
+function Navbar({ vistaActiva, onCambiarVista, organizador, onCerrarSesion }) {
   return (
     <header className="site-header">
       <nav className="navbar navbar-expand-sm">
@@ -33,6 +33,11 @@ function Navbar({ vistaActiva, onCambiarVista }) {
               </li>
             ))}
           </ul>
+          {organizador && (
+            <button type="button" className="btn btn-sm btn-outline-secondary ms-2" onClick={onCerrarSesion}>
+              Salir
+            </button>
+          )}
         </div>
       </nav>
     </header>

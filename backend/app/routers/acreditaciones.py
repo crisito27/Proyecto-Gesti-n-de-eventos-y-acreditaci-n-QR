@@ -1,6 +1,7 @@
 """Endpoints de acreditación y de la bitácora guardada en MongoDB."""
 
 from fastapi import APIRouter, Depends, Query
+from app.core.auth import requerir_organizador
 from pymongo.collection import Collection
 from sqlalchemy.orm import Session
 
@@ -22,6 +23,7 @@ router = APIRouter(tags=["Acreditación y registros de acceso"])
     "/acreditaciones",
     response_model=AcreditacionSalida,
     summary="Acreditar una entrada en la puerta",
+    dependencies=[Depends(requerir_organizador)],
 )
 def acreditar(
     datos: AcreditacionCrear,
@@ -47,6 +49,7 @@ def acreditar(
     "/registros-acceso",
     response_model=list[RegistroAccesoSalida],
     summary="Bitácora de accesos (MongoDB)",
+    dependencies=[Depends(requerir_organizador)],
 )
 def listar_registros(
     evento_id: int | None = Query(default=None),
@@ -61,6 +64,7 @@ def listar_registros(
     "/eventos/{evento_id}/participacion",
     response_model=ResumenParticipacion,
     summary="Resumen de participación (agregación en MongoDB)",
+    dependencies=[Depends(requerir_organizador)],
 )
 def resumen_participacion(
     evento_id: int, registros: Collection = Depends(get_registros)
