@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Acredita QR",
+    "slug": "acredita-qr-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Acredita QR necesita acceder a la cámara para escanear entradas."
+      }
+    },
+    "android": {
+      "permissions": ["CAMERA"],
+      "package": "cl.acreditaqr.mobile"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Acredita QR necesita acceder a la cámara para escanear entradas."
+        }
+      ]
+    ]
+  }
+}
