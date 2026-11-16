@@ -15,7 +15,9 @@
       }
     },
     "android": {
-      "permissions": ["CAMERA"],
+      "permissions": [
+        "CAMERA"
+      ],
       "package": "cl.acreditaqr.mobile"
     },
     "plugins": [
@@ -24,7 +26,8 @@
         {
           "cameraPermission": "Acredita QR necesita acceder a la cámara para escanear entradas."
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }
