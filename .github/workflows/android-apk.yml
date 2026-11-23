@@ -29,8 +29,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Preparar Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Verificar Android SDK preinstalado
+        run: test -d "$ANDROID_HOME" && echo "Android SDK disponible en $ANDROID_HOME"
       - name: Instalar dependencias
         working-directory: mobile
         run: npm ci
