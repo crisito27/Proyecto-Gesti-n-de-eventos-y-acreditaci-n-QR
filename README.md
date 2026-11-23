@@ -12,6 +12,7 @@ Gestión de eventos y acreditación de asistentes mediante código QR.
 > - Aplicación React Native: [`mobile/`](https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/tree/mobile/mobile)
 > - Documentación: [`docs/hito4-mobile.md`](https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/blob/mobile/docs/hito4-mobile.md)
 > - Capturas: [`docs/capturas-hito4/`](https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/tree/mobile/docs/capturas-hito4)
+
 ## Integrantes
 
 - Benjamin Michea
