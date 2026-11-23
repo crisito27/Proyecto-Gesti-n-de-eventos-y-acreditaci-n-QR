@@ -233,3 +233,145 @@ es mejor estudiarlas que declararlas.)*
 **Validación humana:** queda a cargo del equipo probar la versión real desde navegador, revisar los logs, explicar cada cambio y dejar constancia de los resultados. La herramienta no ha validado por los integrantes ni debe sustituir la defensa individual.
 
 **Aprendizaje técnico:** un sitio de GitHub Pages no puede alojar FastAPI ni las bases de datos. Por eso la demo estática se marca como tal; para una web Full Stack pública se requiere una API externa HTTPS y sus bases persistentes, con CORS y secretos configurados.
+
+---
+
+# Uso de Inteligencia Artificial — Hito 4 (aplicación móvil)
+
+**Fecha:** 23 de noviembre de 2026
+**Herramienta:** Claude (Anthropic), modelo Opus 5
+**Integrante que condujo la sesión:** Benjamin Michea
+
+## Declaración
+
+La pantalla "Mis entradas" de la aplicación móvil y el cambio asociado en el
+backend se desarrollaron con asistencia de IA, en una sesión conducida por el
+integrante. El código generado está identificado en el historial de Git: los
+commits `a510b37`, `9fbe74a` y `0e8dedb` llevan la línea
+`Co-Authored-By: Claude Opus 5`, y se integraron mediante el Pull Request #22
+hacia la rama `mobile`.
+
+No se presenta como trabajo propio el código generado. Se presenta como código
+revisado, ejecutado y comprendido por el integrante.
+
+## Registro de uso
+
+### 1. Revisión del estado de la aplicación frente al enunciado
+
+**Propósito:** diagnóstico.
+
+**Solicitud representativa:** *"debo de continuar con la página web, ya es el
+último taller por lo tanto es la entrega final"*, acompañada del enunciado del
+Hito 4 y del enlace al repositorio.
+
+**Resultado:** la herramienta revisó la rama `mobile` y comparó lo
+implementado con los flujos exigidos. Concluyó que estaban cubiertos el
+catálogo con inscripción y el escaneo con acreditación, pero faltaba el tercero:
+que el asistente pudiera volver a consultar su inscripción y su comprobante
+después de cerrar la aplicación.
+
+**Validación humana:** se contrastó con el enunciado del Hito 4 y se recorrió la
+aplicación para confirmar que, efectivamente, al cerrar la app se perdía el
+acceso al QR.
+
+---
+
+### 2. Reconstrucción del entorno de desarrollo en otro equipo
+
+**Propósito:** configuración del entorno.
+
+**Resultado:** instalación de WSL2 y Docker Desktop, clonado del repositorio,
+creación del archivo `.env` a partir de `.env.example`, levantado del stack con
+`docker compose up -d --build`, carga de datos de prueba y creación de las
+credenciales de organizador con `app.configurar_organizador`.
+
+**Problemas resueltos durante el proceso:**
+
+- Docker Desktop no arrancaba por faltar la característica *Virtual Machine
+  Platform* de Windows. Se habilitó con `Enable-WindowsOptionalFeature` y un
+  reinicio completo.
+- PowerShell bloqueaba `npm.ps1` por política de ejecución. Se resolvió usando
+  `npm.cmd`.
+- La aplicación móvil no conectaba con el backend. La causa era que Expo había
+  arrancado en el puerto 8082 porque el 8081 estaba ocupado por una instancia
+  anterior, y ese origen no estaba autorizado en `CORS_ORIGENES`.
+
+**Aprendizaje:** el error *"No se pudo conectar con Acredita QR"* no distingue
+entre un backend caído y una petición rechazada por CORS, porque el navegador
+no entrega el detalle al código JavaScript por razones de seguridad. Hay que
+mirar el puerto real y la lista de orígenes permitidos.
+
+---
+
+### 3. Pantalla "Mis entradas" y cambio en el backend
+
+**Propósito:** generación de código.
+
+**Solicitud:** implementar el flujo faltante, respetando el diseño existente y
+sin duplicar estado en el dispositivo.
+
+**Resultado:**
+
+- `backend/app/schemas/inscripcion.py` y `backend/app/routers/inscripciones.py`:
+  el detalle de una inscripción ahora expone `pago_id` y `numero_comprobante`.
+  Sin el identificador del pago, la aplicación no tenía cómo solicitar el
+  comprobante.
+- `mobile/src/services/almacenamiento.js` (nuevo): guarda en el dispositivo
+  únicamente el `id` y el `codigo` de cada inscripción, con un máximo de 20
+  entradas por el límite de tamaño de `expo-secure-store`.
+- `mobile/src/services/api.js`: función `comprobante()`, que envía el código en
+  la cabecera `X-Codigo-Entrada`.
+- `mobile/src/screens/MyTicketsScreen.js` (nuevo): la pantalla.
+- `mobile/App.js` y `mobile/src/screens/EventsScreen.js`: pestaña "Entradas" en
+  la navegación y guardado automático de la referencia al inscribirse.
+
+**Decisión de diseño discutida:** no guardar la entrada completa en el
+dispositivo, sino sólo una referencia, para que el estado se consulte siempre al
+backend. Si se guardara la entrada completa, el teléfono seguiría mostrando
+"confirmada" después de que el organizador acreditara la asistencia.
+
+**Limitación declarada por la herramienta:** la herramienta verificó la sintaxis
+de los archivos generados con `@babel/parser` y `py_compile`, pero **no pudo
+ejecutar la aplicación**: no tenía Docker ni Expo disponibles en su entorno. Lo
+dejó explícito al entregar el código.
+
+**Validación humana:** el integrante reconstruyó el backend, levantó Expo y
+recorrió el flujo completo en el navegador: inscripción en el "Taller de Diseño
+de Redes", pago, aparición de la entrada en la pestaña "Entradas" con su estado
+y su QR, y despliegue del comprobante `CMP-2026-000001` por $8.000. El contador
+del evento pasó de 20 a 19 cupos disponibles, confirmando que el dato se
+persistió en PostgreSQL.
+
+**Aprendizaje para la defensa:** el asistente no tiene cuenta en el sistema, se
+identifica por posesión del código de su entrada. Esa es la razón por la que
+los endpoints de inscripción y comprobante exigen la cabecera
+`X-Codigo-Entrada` en lugar de un token: no hay usuario que autenticar, pero sí
+hay que demostrar que se posee la entrada.
+
+---
+
+### 4. Documentación del Hito 4
+
+**Propósito:** documentación.
+
+**Resultado:** el archivo `docs/hito4-mobile.md`, con las pantallas y sus
+flujos, la lista de endpoints consumidos, la configuración de la URL del
+servidor y las limitaciones conocidas. La lista de endpoints se obtuvo leyendo
+los routers reales del backend, no de memoria.
+
+**Validación humana:** *(completar: revisar que cada endpoint listado
+corresponda a lo que la app efectivamente llama, y que las capturas coincidan
+con las pantallas descritas)*
+
+---
+
+## Qué puede explicar el integrante sobre el Hito 4
+
+| Tema | Explicación preparada |
+|---|---|
+| Por qué el dispositivo guarda referencias y no datos | Sí — el estado cambia fuera del teléfono |
+| Por qué el código lo emite el servidor y no la app | Sí — es la credencial de acceso |
+| Para qué sirve la cabecera `X-Codigo-Entrada` | Sí — prueba de posesión sin cuenta de usuario |
+| Qué hace el WebSocket y qué no hace | Sí — avisa que algo cambió; los datos siguen llegando por REST |
+| Cómo se configura la URL del servidor | Sí — `EXPO_PUBLIC_API_URL`, leída al compilar el bundle |
+| Por qué el escáner tiene alternativa manual | Sí — el permiso de cámara puede denegarse |
