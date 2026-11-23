@@ -27,8 +27,16 @@ class InscripcionSalida(BaseModel):
 
 
 class InscripcionDetalle(InscripcionSalida):
-    """Inscripción con su evento y su asistente, para la vista "Mi entrada"."""
+    """Inscripción con su evento y su asistente, para la vista "Mi entrada".
+
+    `pago_id` y `numero_comprobante` se agregaron para el Hito 4: la
+    aplicación móvil necesita poder mostrar el comprobante de una
+    inscripción propia, y sin el identificador del pago no tenía cómo
+    pedirlo a `/pagos/{id}/comprobante`.
+    """
 
     evento: EventoSalida
     usuario: UsuarioSalida
     pagada: bool = False
+    pago_id: int | None = None
+    numero_comprobante: str | None = None
