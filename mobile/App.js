@@ -10,6 +10,7 @@ import {
 
 import DashboardScreen from "./src/screens/DashboardScreen";
 import EventsScreen from "./src/screens/EventsScreen";
+import MyTicketsScreen from "./src/screens/MyTicketsScreen";
 import ScannerScreen from "./src/screens/ScannerScreen";
 import LogsScreen from "./src/screens/LogsScreen";
 import LoginScreen from "./src/screens/LoginScreen";
@@ -25,6 +26,7 @@ import {
 const TABS = [
   { key: "inicio", label: "Inicio", icon: "⌂" },
   { key: "eventos", label: "Eventos", icon: "▦" },
+  { key: "entradas", label: "Entradas", icon: "▢" },
   { key: "escanear", label: "Escanear", icon: "▣" },
   { key: "registros", label: "Bitácora", icon: "≡" },
 ];
@@ -126,6 +128,17 @@ export default function App() {
         <EventsScreen
           refreshKey={refreshKey}
           onChanged={refrescar}
+        />
+      );
+    }
+
+    // "Mis entradas" es pública igual que el catálogo: el asistente no
+    // tiene cuenta, se identifica por el código que guarda su dispositivo.
+    if (tab === "entradas") {
+      return (
+        <MyTicketsScreen
+          refreshKey={refreshKey}
+          onNavigate={setTab}
         />
       );
     }

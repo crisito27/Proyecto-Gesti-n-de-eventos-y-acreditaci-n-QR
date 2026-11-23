@@ -37,6 +37,10 @@ def _a_detalle(db: Session, inscripcion) -> InscripcionDetalle:
             "usuario": UsuarioSalida.model_validate(inscripcion.usuario),
             "pagada": inscripcion.pago is not None
             and inscripcion.pago.estado == EstadoPago.PAGADO,
+            "pago_id": inscripcion.pago.id if inscripcion.pago else None,
+            "numero_comprobante": (
+                inscripcion.pago.numero_comprobante if inscripcion.pago else None
+            ),
         }
     )
     return detalle

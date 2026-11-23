@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { apiFunciones } from "../services/api";
+import { guardarInscripcion } from "../services/almacenamiento";
 import EventCard from "../components/EventCard";
 import LoadingView from "../components/LoadingView";
 import { colors } from "../theme/colors";
@@ -130,6 +131,15 @@ export default function EventsScreen({ refreshKey, onChanged }) {
       // Guardamos el identificador y código para reutilizarlos
       // si el pago necesita un segundo intento.
       setPendingInscription(pendiente);
+
+      // Referencia local para la pantalla "Mis entradas". Sólo el id y
+      // el código: el estado se consulta siempre al backend.
+      await guardarInscripcion({
+        id: inscription.id,
+        codigo: inscription.codigo,
+        evento: selected.nombre,
+        fecha: selected.fecha,
+      });
 
       await completarPago(pendiente);
     } catch (e) {
