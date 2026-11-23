@@ -4,7 +4,13 @@
 Universidad Andrés Bello
 
 Gestión de eventos y acreditación de asistentes mediante código QR.
-
+> ### Hito 4 — Aplicación móvil
+>
+> La entrega del Hito 4 está en la rama **[`mobile`](https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/tree/mobile)**, no en `master`.
+>
+> - Aplicación React Native: [`mobile/`](https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/tree/mobile/mobile)
+> - Documentación: [`docs/hito4-mobile.md`](https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/blob/mobile/docs/hito4-mobile.md)
+> - Capturas: [`docs/capturas-hito4/`](https://github.com/crisito27/Proyecto-Gesti-n-de-eventos-y-acreditaci-n-QR/tree/mobile/docs/capturas-hito4)
 ## Integrantes
 
 - Benjamin Michea
