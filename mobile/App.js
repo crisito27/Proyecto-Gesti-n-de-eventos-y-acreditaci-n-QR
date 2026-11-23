@@ -13,6 +13,8 @@ import EventsScreen from "./src/screens/EventsScreen";
 import ScannerScreen from "./src/screens/ScannerScreen";
 import LogsScreen from "./src/screens/LogsScreen";
 import LoginScreen from "./src/screens/LoginScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
+import { cargarUrlApi, guardarUrlApi, obtenerUrlApi } from "./src/services/serverConfig";
 import { colors } from "./src/theme/colors";
 import { conectarRealtime } from "./src/services/realtime";
 import {
@@ -27,6 +29,7 @@ const TABS = [
   { key: "eventos", label: "Eventos", icon: "▦" },
   { key: "escanear", label: "Escanear", icon: "▣" },
   { key: "registros", label: "Bitácora", icon: "≡" },
+  { key: "ajustes", label: "Ajustes", icon: "⚙" },
 ];
 
 export default function App() {
@@ -35,6 +38,8 @@ export default function App() {
   const [usuario, setUsuario] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [apiUrl, setApiUrl] = useState(obtenerUrlApi());
+  const [configLoading, setConfigLoading] = useState(true);
 
   const refrescar = useCallback(() => {
     setRefreshKey((n) => n + 1);
@@ -42,20 +47,39 @@ export default function App() {
 
   useEffect(() => {
     let activo = true;
+    cargarUrlApi()
+      .then((guardada) => {
+        if (!activo) return;
+        setApiUrl(guardada);
+        if (!guardada) setTab("ajustes");
+      })
+      .catch(() => {
+        if (activo) setTab("ajustes");
+      })
+      .finally(() => {
+        if (activo) setConfigLoading(false);
+      });
+    return () => { activo = false; };
+  }, []);
 
+  useEffect(() => {
+    if (configLoading) return;
+    if (!apiUrl) {
+      setUsuario(null);
+      setAuthLoading(false);
+      return;
+    }
+    let activo = true;
+    setAuthLoading(true);
     const restaurarSesion = async () => {
       try {
         const token = await obtenerToken();
-
         if (!token) return;
-
         const actual = await apiFunciones.yo();
-
         if (actual?.rol !== "organizador") {
           await eliminarToken();
           return;
         }
-
         if (activo) {
           setUsuario(actual);
           setTab("inicio");
@@ -66,18 +90,27 @@ export default function App() {
         if (activo) setAuthLoading(false);
       }
     };
-
     restaurarSesion();
-
-    return () => {
-      activo = false;
-    };
-  }, []);
+    return () => { activo = false; };
+  }, [configLoading, apiUrl]);
 
   useEffect(() => {
-    const desconectar = conectarRealtime(refrescar);
-    return desconectar;
-  }, [refrescar]);
+    if (configLoading || !apiUrl) return;
+    return conectarRealtime(refrescar, apiUrl);
+  }, [refrescar, apiUrl, configLoading]);
+
+  const configurarServidor = async (direccion) => {
+    const nueva = await guardarUrlApi(direccion);
+    if (nueva !== apiUrl) {
+      await eliminarToken();
+      setUsuario(null);
+      setAuthLoading(false);
+      setApiUrl(nueva);
+      setTab("eventos");
+      refrescar();
+    }
+    return nueva;
+  };
 
   const iniciarSesion = async (email, clave) => {
     setLoginLoading(true);
@@ -121,6 +154,14 @@ export default function App() {
   };
 
   const renderScreen = () => {
+    if (configLoading) {
+      return <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><ActivityIndicator size="large" color={colors.primary} /><Text style={{ marginTop: 10, color: colors.muted }}>Cargando configuración...</Text></View>;
+    }
+
+    if (tab === "ajustes" || !apiUrl) {
+      return <SettingsScreen apiUrl={apiUrl} onSave={configurarServidor} />;
+    }
+
     if (tab === "eventos") {
       return (
         <EventsScreen
@@ -241,7 +282,7 @@ export default function App() {
                   marginTop: 5,
                 }}
               >
-                Acceso público a eventos
+                {apiUrl ? "Acceso público a eventos" : "Servidor sin configurar"}
               </Text>
             )}
           </View>
