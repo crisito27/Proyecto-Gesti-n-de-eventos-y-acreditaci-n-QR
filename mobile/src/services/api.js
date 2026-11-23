@@ -131,7 +131,10 @@ export const apiFunciones = {
 
   indicadores: () => api.get("/indicadores"),
 
-  eventos: () => api.get("/eventos"),
+  // El catálogo de la aplicación es público, igual que el de la web: sólo
+  // muestra eventos publicados. Un borrador es un evento que el organizador
+  // todavía está preparando, y para el asistente no debería existir.
+  eventos: () => api.get("/eventos", { estado: "publicado" }),
 
   inscribirse: (datos) =>
     api.post("/inscripciones/publica", {
