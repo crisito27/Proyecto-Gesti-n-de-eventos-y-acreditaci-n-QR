@@ -160,6 +160,15 @@ export const apiFunciones = {
       }
     ),
 
+  // El comprobante sólo lo entrega el backend a quien posee el código
+  // original de la entrada, que viaja en la cabecera X-Codigo-Entrada.
+  comprobante: (pagoId, codigo) =>
+    api.get(
+      `/pagos/${Number(pagoId)}/comprobante`,
+      undefined,
+      { headers: { "X-Codigo-Entrada": codigo } }
+    ),
+
   acreditar: (codigo, puerta = "principal") =>
     api.post("/acreditaciones", {
       codigo: codigo.trim(),
