@@ -1,7 +1,7 @@
-const API_URL = (process.env.EXPO_PUBLIC_API_URL || "").replace(/\/+$/, "");
-const WS_URL = process.env.EXPO_PUBLIC_WS_URL || (API_URL ? API_URL.replace(/^http/, "ws").replace(/\/api$/, "/ws") : "");
+import { obtenerUrlWebSocket } from "./serverConfig";
 
-export function conectarRealtime(onChange) {
+export function conectarRealtime(onChange, urlApi) {
+  const WS_URL = obtenerUrlWebSocket(urlApi);
   if (!WS_URL) return () => {};
   let socket;
   let retryTimer;
