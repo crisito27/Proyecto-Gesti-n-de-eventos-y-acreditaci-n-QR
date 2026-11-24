@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { obtenerUrlApi } from "./serverConfig";
 
-const API_URL = (process.env.EXPO_PUBLIC_API_URL || "").replace(/\/+$/, "");
 const TOKEN_KEY = "acredita_qr_access_token";
 
 export class ApiError extends Error {
@@ -46,9 +46,10 @@ export async function eliminarToken() {
 }
 
 async function request(path, options = {}) {
+  const API_URL = obtenerUrlApi();
   if (!API_URL) {
     throw new ApiError(
-      "Configura EXPO_PUBLIC_API_URL en mobile/.env.",
+      "Abre la pestaña Ajustes y configura la dirección del servidor.",
       "configuracion",
       0
     );
