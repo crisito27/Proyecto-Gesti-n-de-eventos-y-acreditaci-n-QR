@@ -36,9 +36,22 @@ _cliente: MongoClient | None = None
 
 
 def get_cliente() -> MongoClient:
+    """Cliente de MongoDB, creado una sola vez por proceso.
+
+    `tz_aware=True` es necesario: MongoDB almacena las fechas en UTC, pero
+    PyMongo las devuelve sin zona horaria si no se le pide lo contrario. Al
+    serializarlas, el JSON salía como `2026-11-23T16:10:52` —sin el sufijo que
+    indica UTC— y el navegador las interpretaba como hora local, mostrando la
+    bitácora tres horas adelantada. Con esta marca, la fecha viaja como
+    `2026-11-23T16:10:52+00:00` y cada cliente la convierte a su propia zona.
+    """
     global _cliente
     if _cliente is None:
-        _cliente = MongoClient(settings.mongo_uri, serverSelectionTimeoutMS=5000)
+        _cliente = MongoClient(
+            settings.mongo_uri,
+            serverSelectionTimeoutMS=5000,
+            tz_aware=True,
+        )
     return _cliente
 
 

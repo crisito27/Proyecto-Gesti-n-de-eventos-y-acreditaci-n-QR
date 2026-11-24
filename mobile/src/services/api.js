@@ -132,7 +132,10 @@ export const apiFunciones = {
 
   indicadores: () => api.get("/indicadores"),
 
-  eventos: () => api.get("/eventos"),
+  // El catálogo de la aplicación es público, igual que el de la web: sólo
+  // muestra eventos publicados. Un borrador es un evento que el organizador
+  // todavía está preparando, y para el asistente no debería existir.
+  eventos: () => api.get("/eventos", { estado: "publicado" }),
 
   inscribirse: (datos) =>
     api.post("/inscripciones/publica", {
@@ -159,6 +162,15 @@ export const apiFunciones = {
       {
         headers: { "X-Codigo-Entrada": codigo },
       }
+    ),
+
+  // El comprobante sólo lo entrega el backend a quien posee el código
+  // original de la entrada, que viaja en la cabecera X-Codigo-Entrada.
+  comprobante: (pagoId, codigo) =>
+    api.get(
+      `/pagos/${Number(pagoId)}/comprobante`,
+      undefined,
+      { headers: { "X-Codigo-Entrada": codigo } }
     ),
 
   acreditar: (codigo, puerta = "principal") =>
