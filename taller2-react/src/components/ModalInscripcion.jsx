@@ -18,14 +18,33 @@ import { formatearFecha, formatearPrecio } from "../utils/formato";
 
 const FORMULARIO_VACIO = { nombre: "", email: "", telefono: "" };
 
+// Longitudes maximas, iguales a las del backend: nombre hasta 120
+// caracteres y telefono hasta 12 digitos.
+const LIMITES = { nombre: 120, email: 120, telefono: 12 };
+
 function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
   const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
   const [errores, setErrores] = useState({});
   const [errorServidor, setErrorServidor] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
+  /* El campo deja de aceptar texto al llegar al tope, en vez de avisar
+     del error recién al enviar.
+
+     Los límites son los mismos que valida el backend en `UsuarioCrear`.
+     Repetirlos aquí no sustituye esa validación: el navegador es
+     manipulable y el servidor tiene que defenderse igual. Lo que evita
+     es que alguien escriba doscientos caracteres para nada.
+
+     El recorte vive en esta función y no sólo en el atributo `maxLength`
+     de cada campo, para que la regla quede en un único lugar. */
   function actualizarCampo(campo, valor) {
-    setFormulario({ ...formulario, [campo]: valor });
+    // El teléfono sólo admite dígitos.
+    const limpio = campo === "telefono" ? valor.replace(/\D/g, "") : valor;
+    setFormulario({
+      ...formulario,
+      [campo]: limpio.slice(0, LIMITES[campo]),
+    });
   }
 
   function validar() {
@@ -111,6 +130,7 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 className={"form-control" + (errores.nombre ? " is-invalid" : "")}
                 value={formulario.nombre}
                 onChange={(e) => actualizarCampo("nombre", e.target.value)}
+                maxLength={LIMITES.nombre}
                 disabled={enviando}
               />
               {errores.nombre && <div className="invalid-feedback">{errores.nombre}</div>}
@@ -126,6 +146,7 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 className={"form-control" + (errores.email ? " is-invalid" : "")}
                 value={formulario.email}
                 onChange={(e) => actualizarCampo("email", e.target.value)}
+                maxLength={LIMITES.email}
                 disabled={enviando}
               />
               {errores.email && <div className="invalid-feedback">{errores.email}</div>}
@@ -142,6 +163,8 @@ function ModalInscripcion({ evento, onConfirmar, onCerrar }) {
                 placeholder="912345678"
                 value={formulario.telefono}
                 onChange={(e) => actualizarCampo("telefono", e.target.value)}
+                maxLength={LIMITES.telefono}
+                inputMode="numeric"
                 disabled={enviando}
               />
               {errores.telefono && <div className="invalid-feedback">{errores.telefono}</div>}

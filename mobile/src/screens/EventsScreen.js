@@ -15,6 +15,20 @@ import LoadingView from "../components/LoadingView";
 import { colors } from "../theme/colors";
 import QRCode from "react-native-qrcode-svg";
 
+/* Longitudes máximas de cada campo del formulario.
+
+   Son las mismas que valida el backend en `UsuarioCrear`: nombre de 3 a
+   120 caracteres y teléfono de 8 a 12 dígitos. Repetirlas aquí no
+   sustituye a la validación del servidor —el teclado del teléfono es
+   manipulable y la API tiene que defenderse igual—, pero evita que
+   alguien escriba doscientos caracteres y se entere del límite recién
+   al pulsar el botón. */
+const LIMITES = {
+  nombre: 120,
+  email: 120,
+  telefono: 12,
+};
+
 const inputStyle = {
   backgroundColor: "#f8fafc",
   borderWidth: 1,
@@ -431,9 +445,16 @@ export default function EventsScreen({ refreshKey, onChanged }) {
                       onChangeText={(value) =>
                         setForm((old) => ({
                           ...old,
-                          [key]: value,
+                          // El teléfono sólo admite dígitos. Se descartan
+                          // los demás caracteres mientras se escribe, en
+                          // vez de avisar del error recién al enviar.
+                          [key]:
+                            key === "telefono"
+                              ? value.replace(/\D/g, "")
+                              : value,
                         }))
                       }
+                      maxLength={LIMITES[key]}
                       placeholder={
                         key === "nombre"
                           ? "Nombre completo"
